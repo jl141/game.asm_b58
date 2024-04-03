@@ -37,7 +37,14 @@
 .data
 .eqv BASE_ADDRESS 0x10008000
 .eqv FRAME_DELAY 40
-player_stats: .space 8
+# player_states:
+# 2 bytes: x position
+# 2 bytes: y position
+# 1 byte: x velocity
+# 1 byte: y velocity
+# 1 byte: jump state
+# 1 byte: health state
+player_states: .space 8
 
 .globl main_title
 .text
@@ -86,33 +93,51 @@ game_loop:
 	lw $t8, 0($t9)
 	beq $t8, 1, keypressed
 
-game_loop_refresh:
+game_refresh:
+	li $t1, 0xff00ff
+	li $t4, BASE_ADDRESS
+	sw $t1, 256($t4)
+	sw $t1, 8576($t4)
+	sw $t1, 8448($t4)
+	sw $t1, 16380($t4)
+	
+	# frame delay before looping
 	li $v0, 32
 	li $a0, FRAME_DELAY
 	syscall
 	j game_loop
 
 keypressed:
-	lw $t2, 4($t9) 
-	beq $t2, 0x61, a_pressed
-	beq $t2, 0x71, q_pressed
-	j game_loop_refresh
-
-a_pressed:
-	li $t1, 0x0000ff
-	move $t4, $t0
-	addi $t4, $t4, 256
-	sw $t1, 0($t4)
-	addi $t4, $t4, 256
-	sw $t1, 0($t4)
-	addi $t4, $t4, 256
-	sw $t1, 0($t4)
-	addi $t4, $t4, 256
-	sw $t1, 0($t4)
+	lw $t8, 4($t9) 
+	beq $t8, 0x71, q_pressed
+	beq $t8, 0x77, w_pressed
+	beq $t8, 0x65, e_pressed
+	beq $t8, 0x72, r_pressed
+	beq $t8, 0x20, sp_pressed
+	beq $t8, 0x6c, l_pressed
 	j game_loop_refresh
 
 q_pressed:
+	lw $t1, player_states()
+	beq 
+	j game_loop_refresh
+
+w_pressed:
+	j game_loop_refresh
+
+e_pressed:
+	j game_loop_refresh
+
+r_pressed:
+	j game_loop_refresh
+
+sp_pressed:
+	
+	j game_loop_refresh
+
+l_pressed:
 	j end_screen
+
 
 end_screen:
 	li $t1, 0xff0000
