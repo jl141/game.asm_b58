@@ -88,26 +88,29 @@ game:
 	sw $t1, 4096($t0)
 	sw $t1, 8192($t0)	
 
-game_loop:
+game_check_keypress:
 	li $t9, 0xffff0000
 	lw $t8, 0($t9)
-	beq $t8, 1, keypressed
-
-game_refresh:
+	beq $t8, 1, game_keypressed
+	
+game_check_collision:
+	
+game_update_screen:
 	li $t1, 0xff00ff
 	li $t4, BASE_ADDRESS
 	sw $t1, 256($t4)
 	sw $t1, 8576($t4)
 	sw $t1, 8448($t4)
 	sw $t1, 16380($t4)
-	
+
+game_refresh:	
 	# frame delay before looping
 	li $v0, 32
 	li $a0, FRAME_DELAY
 	syscall
-	j game_loop
+	j game_check_keypress
 
-keypressed:
+game_keypressed:
 	lw $t8, 4($t9) 
 	beq $t8, 0x71, q_pressed
 	beq $t8, 0x77, w_pressed
@@ -115,29 +118,57 @@ keypressed:
 	beq $t8, 0x72, r_pressed
 	beq $t8, 0x20, sp_pressed
 	beq $t8, 0x6c, l_pressed
-	j game_loop_refresh
+	j game_check_collision
 
 q_pressed:
-	lw $t1, player_states()
-	beq 
-	j game_loop_refresh
+	# only left flip if jump state is 1
+	lb $t6, player_states+6($zero)
+	bne $t6, 1, game_check_collision
+left_flip:
+	lb $t4, -4 # left speed
+	sb $t4, player_states+4($zero)
+	lb $t5, 4 # up speed
+	sb $t5, player_states+5($zero)
+	lb $t6, 2 # new jump state
+	sb $t6, player_states+6($zero)
+	j game_check_collision
 
 w_pressed:
-	j game_loop_refresh
+	lb $t4, -3 # left speed
+	sb $t4, player_states+4($zero)
+	j game_check_collision
 
 e_pressed:
-	j game_loop_refresh
+	lb $t4, 3 # right speed
+	sb $t4, player_states+4($zero)
+	j game_check_collision
 
 r_pressed:
-	j game_loop_refresh
+	# only right flip if jump state is 1
+	lb $t6, player_states+6($zero)
+	bne $t6, 1, game_check_collision
+right_flip:
+	lb $t4, 4 # right speed
+	sb $t4, player_states+4($zero)
+	lb $t5, 4 # up speed
+	sb $t5, player_states+5($zero)
+	lb $t6, 2 # new jump state
+	sb $t6, player_states+6($zero)
+	j game_check_collision
 
 sp_pressed:
-	
-	j game_loop_refresh
+	# only jump if jump state is 0 
+	lb $t6, player_states+6($zero)
+	bne $t6, 0, game_check_collision
+jump:
+	lb $t5, 5 # jump speed
+	sb $t5, player_states+5($zero)	
+	lb $t6, 1 # new jump state
+	sb $t6, player_states+6($zero)
+	j game_check_collision
 
 l_pressed:
 	j end_screen
-
 
 end_screen:
 	li $t1, 0xff0000
