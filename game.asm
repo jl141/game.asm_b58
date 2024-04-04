@@ -36,10 +36,15 @@
 
 .data
 .eqv BASE_ADDRESS 0x10008000
-.eqv BLACK 0x00000000
 .eqv FRAME_DELAY 50
 .eqv GRAVITY 1
-.eqv FLOOR 62
+.eqv FLOOR_HEIGHT 62
+.eqv FLOOR_COLOUR 0x888899
+.eqv BACKGROUND 0x444444
+.eqv BODY_COLOUR 0x22ffaa
+.eqv GOGGLE_COLOUR 0xff22aa
+.eqv PLATFORM_COLOUR 0xbbbbcc
+
 
 # player_states:
 # 2 bytes: x position
@@ -89,7 +94,7 @@ main_title_keypressed:
 	j main_title_loop_refresh
 
 reset_screen:
-	li $t1, BLACK
+	li $t1, BACKGROUND
 	move $t2, $zero
 reset_screen_loop:
 	sw $t1, BASE_ADDRESS($t2)
@@ -99,10 +104,10 @@ reset_screen_loop:
 
 game:
 	li $t0, BASE_ADDRESS
-	li $t1, FLOOR
+	li $t1, FLOOR_HEIGHT
 	mul $t1, $t1, 256
 	add $t0, $t0, $t1 # floor height in $t0
-	li $t1, 0x885522 # colour
+	li $t1, FLOOR_COLOUR # floor colour
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -181,11 +186,9 @@ game:
 	sh $t2, player_states+12($zero)
 				
 	li $t0, 10
-	li $t2, 55
-	li $t4, 10
+	li $t2, 52
 	sh $t0, platform_1+0($zero)
 	sh $t2, platform_1+2($zero)
-	sb $t4, platform_1+4($zero)	
 
 game_check_keypress:
 	li $t9, 0xffff0000
@@ -215,7 +218,7 @@ game_check_collisions:
 
 player_floor:
 	# check player-floor collision
-	li $t1, FLOOR
+	li $t1, FLOOR_HEIGHT
 	addi $t1, $t1, -5
 	blt $t2, $t1, player_platform
 	move $t2, $t1
@@ -279,7 +282,7 @@ erase_player:
 	# erase player
 	lh $t0, player_states+10($zero) # previous x position
 	lh $t2, player_states+12($zero) # previous y position
-	li $t1, BLACK # colour
+	li $t1, BACKGROUND # background colour
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
@@ -309,7 +312,7 @@ paint_platforms:
 	# paint platform_1
 	lh $t0, platform_1+0($zero) # x position	
 	lh $t2, platform_1+2($zero) # y position
-	li $t1, 0x885522 # colour
+	li $t1, PLATFORM_COLOUR # platform colour
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
@@ -336,7 +339,7 @@ paint_player:
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
-	li $t1, 0x22ffaa # body colour
+	li $t1, BODY_COLOUR # body colour
 	# body parts independent of direction
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -356,7 +359,7 @@ paint_player:
 	sw $t1, 260($t0)
 	sw $t1, 1028($t0)
 	sw $t1, 1036($t0)
-	li $t1, 0xaa22ff # goggle colour
+	li $t1, GOGGLE_COLOUR # goggle colour
 	sw $t1, 264($t0)
 	sw $t1, 268($t0)
 	j game_refresh
@@ -367,7 +370,7 @@ player_facing_left:
 	sw $t1, 268($t0)
 	sw $t1, 1024($t0)
 	sw $t1, 1032($t0)
-	li $t1, 0xaa22ff # goggle colour
+	li $t1, GOGGLE_COLOUR # goggle colour
 	sw $t1, 256($t0)
 	sw $t1, 260($t0)
 	j game_refresh
@@ -406,15 +409,27 @@ left_flip:
 	j game_update_positions
 
 w_pressed:
+	# only move left if jump state is 0
+	lb $t6, player_states+6($zero)
+	bne $t6, 0, game_update_positions
+move_left:
 	li $t4, -1 # left speed
 	sb $t4, player_states+4($zero)
+	li $t6, 1 # new jump state
+	sb $t6, player_states+6($zero)
 	li $t9, 0 # facing left
 	sb $t9, player_states+9($zero)
 	j game_update_positions
 
 e_pressed:
+	# only move right if jump state is 0
+	lb $t6, player_states+6($zero)
+	bne $t6, 0, game_update_positions
+move_right:
 	li $t4, 1 # right speed
 	sb $t4, player_states+4($zero)
+	li $t6, 1 # new jump state
+	sb $t6, player_states+6($zero)
 	li $t9, 1 # facing right
 	sb $t9, player_states+9($zero)
 	j game_update_positions
