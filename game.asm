@@ -37,9 +37,9 @@
 .data
 .eqv BASE_ADDRESS 0x10008000
 .eqv BLACK 0x00000000
-.eqv FRAME_DELAY 500
+.eqv FRAME_DELAY 40
 .eqv GRAVITY 1
-.eqv FLOOR 60
+.eqv FLOOR 62
 
 # player_states:
 # 2 bytes: x position
@@ -97,14 +97,74 @@ reset_screen_loop:
 
 game:
 	li $t0, BASE_ADDRESS
-	li $t1, 0x00aaff
+	li $t1, FLOOR
+	mul $t1, $t1, 256
+	add $t0, $t0, $t1 # floor height in $t0
+	li $t1, 0x885522 # colour
 	sw $t1, 0($t0)
-	sw $t1, 256($t0)
-	sw $t1, 512($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 2048($t0)
-	sw $t1, 4096($t0)
-	sw $t1, 8192($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 28($t0)
+	sw $t1, 32($t0)
+	sw $t1, 36($t0)
+	sw $t1, 40($t0)
+	sw $t1, 44($t0)
+	sw $t1, 48($t0)
+	sw $t1, 52($t0)
+	sw $t1, 56($t0)
+	sw $t1, 60($t0)
+	sw $t1, 64($t0)
+	sw $t1, 68($t0)
+	sw $t1, 72($t0)
+	sw $t1, 76($t0)
+	sw $t1, 80($t0)
+	sw $t1, 84($t0)
+	sw $t1, 88($t0)
+	sw $t1, 92($t0)
+	sw $t1, 96($t0)
+	sw $t1, 100($t0)
+	sw $t1, 104($t0)
+	sw $t1, 108($t0)
+	sw $t1, 112($t0)
+	sw $t1, 116($t0)
+	sw $t1, 120($t0)
+	sw $t1, 124($t0)
+	sw $t1, 128($t0)
+	sw $t1, 132($t0)
+	sw $t1, 136($t0)
+	sw $t1, 140($t0)
+	sw $t1, 144($t0)
+	sw $t1, 148($t0)
+	sw $t1, 152($t0)
+	sw $t1, 156($t0)
+	sw $t1, 160($t0)
+	sw $t1, 164($t0)
+	sw $t1, 168($t0)
+	sw $t1, 172($t0)
+	sw $t1, 176($t0)
+	sw $t1, 180($t0)
+	sw $t1, 184($t0)
+	sw $t1, 188($t0)
+	sw $t1, 192($t0)
+	sw $t1, 196($t0)
+	sw $t1, 200($t0)
+	sw $t1, 204($t0)
+	sw $t1, 208($t0)
+	sw $t1, 212($t0)
+	sw $t1, 216($t0)
+	sw $t1, 220($t0)
+	sw $t1, 224($t0)
+	sw $t1, 228($t0)
+	sw $t1, 232($t0)
+	sw $t1, 236($t0)
+	sw $t1, 240($t0)
+	sw $t1, 244($t0)
+	sw $t1, 248($t0)
+	sw $t1, 252($t0)
 	
 	# initialize player and platform states
 	li $t0, 30
@@ -151,23 +211,12 @@ game_check_collisions:
 	lb $t5, player_states+5($zero) # y velocity
 	lb $t6, player_states+6($zero) # jump state
 
-player_bottom_check:
+player_floor:
 	# check player-floor collision
-	blt $t2, FLOOR, player_wall
-	li $t2, 60
-	j player_bottom_move
-	
-	# check player-platform_1 collision
-	lh $t8, platform_1+2($zero)
-	blt $t2, $t8, player_wall
-	lh $t7, platform_1($zero)	
-	blt $t0, $t7, player_wall
-	addi $t7, $t7, 10
-	bgt $t0, $t7, player_wall
-	move $t2, $t8
-	j player_bottom_move	
-	
-player_bottom_move:
+	li $t1, FLOOR
+	addi $t1, $t1, -3
+	blt $t2, $t1, player_platform
+	move $t2, $t1
 	li $t4, 0
 	li $t5, 0
 	li $t6, 0
@@ -175,18 +224,46 @@ player_bottom_move:
 	sb $t4, player_states+4($zero)
 	sb $t5, player_states+5($zero)
 	sb $t6, player_states+6($zero)
-	
-player_upper_check:
+	j player_left_wall
 
+player_platform:
+	# if velocity is going up, do not check for platform collision
+	blt $t5, $zero, player_left_wall
 
-player_wall:
-	# check player-wall collision
-	blt $t4, 0, player_enemy
-	blt $t4, 60, player_enemy
+player_platform_1:
+	# check player-platform_1 collision
+	lh $t8, platform_1+2($zero)
+	addi $t8, $t8, -3
+	blt $t2, $t8, player_left_wall
+	lh $t9, platform_1($zero)	
+	blt $t0, $t9, player_left_wall
+	addi $t9, $t9, 10
+	bgt $t0, $t9, player_left_wall
+	move $t2, $t8
 	li $t4, 0
+	li $t5, 0
+	li $t6, 0
+	sh $t2, player_states+2($zero)	
+	sb $t4, player_states+4($zero)
+	sb $t5, player_states+5($zero)
+	sb $t6, player_states+6($zero)
+
+player_left_wall:
+	# check player-left_wall collision
+	bgt $t0, 0, player_right_wall
+	li $t0, 0
+	li $t4, 0
+	sh $t0, player_states+0($zero)
 	sb $t4, player_states+4($zero)
 
-		
+player_right_wall:
+	# check player-left_wall collision
+	blt $t0, 60, player_enemy
+	li $t0, 60
+	li $t4, 0
+	sh $t0, player_states+0($zero)
+	sb $t4, player_states+4($zero)
+
 player_enemy:
 	# check player-enemy collision
 	
@@ -201,7 +278,7 @@ game_update_screen:
 	sw $t1, 8448($t0)
 	sw $t1, 16380($t0)
 	
-	# erase then paint player
+	# erase player
 	lh $t0, player_states+8($zero) # previous x position
 	lh $t2, player_states+10($zero) # previous y position
 	li $t1, BLACK # colour
@@ -215,22 +292,6 @@ game_update_screen:
 	sw $t1, 260($t0)
 	sw $t1, 512($t0)
 	sw $t1, 516($t0)
-	lh $t0, player_states+0($zero) # x position
-	lh $t2, player_states+2($zero) # y position
-	sh $t0, player_states+8($zero) # store as previous x position
-	sh $t2, player_states+10($zero) # store as previous y position
-	li $t1, 0x6699ff # colour
-	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
-	add $t0, $t0, $t2
-	addi $t0, $t0, BASE_ADDRESS
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-
 	
 	# paint platform_1
 	lh $t0, platform_1+0($zero) # x position	
@@ -251,6 +312,24 @@ game_update_screen:
 	sw $t1, 32($t0)
 	sw $t1, 36($t0)
 	sw $t1, 40($t0)	
+
+	# paint player
+	lh $t0, player_states+0($zero) # x position
+	lh $t2, player_states+2($zero) # y position
+	sh $t0, player_states+8($zero) # store as previous x position
+	sh $t2, player_states+10($zero) # store as previous y position
+	li $t1, 0x6699ff # colour
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 4 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+
 
 	j game_refresh
 
@@ -277,7 +356,7 @@ q_pressed:
 	lb $t6, player_states+6($zero)
 	bne $t6, 1, game_update_positions
 left_flip:
-	li $t4, -3 # left speed
+	li $t4, -2 # left speed
 	sb $t4, player_states+4($zero)
 	li $t5, -3 # up speed
 	sb $t5, player_states+5($zero)
@@ -286,12 +365,12 @@ left_flip:
 	j game_update_positions
 
 w_pressed:
-	li $t4, -2 # left speed
+	li $t4, -1 # left speed
 	sb $t4, player_states+4($zero)
 	j game_update_positions
 
 e_pressed:
-	li $t4, 2 # right speed
+	li $t4, 1 # right speed
 	sb $t4, player_states+4($zero)
 	j game_update_positions
 
@@ -300,7 +379,7 @@ r_pressed:
 	lb $t6, player_states+6($zero)
 	bne $t6, 1, game_update_positions
 right_flip:
-	li $t4, 3 # right speed
+	li $t4, 2 # right speed
 	sb $t4, player_states+4($zero)
 	li $t5, -3 # up speed
 	sb $t5, player_states+5($zero)
@@ -313,7 +392,7 @@ sp_pressed:
 	lb $t6, player_states+6($zero)
 	bne $t6, 0, game_update_positions
 jump:
-	li $t5, -5 # jump speed
+	li $t5, -4 # jump speed
 	sb $t5, player_states+5($zero)	
 	li $t6, 1 # new jump state
 	sb $t6, player_states+6($zero)
