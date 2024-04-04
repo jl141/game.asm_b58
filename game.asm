@@ -40,6 +40,7 @@
 .eqv GRAVITY 1
 .eqv PLAYER_HEIGHT 5
 .eqv FLOOR_HEIGHT 62
+.eqv BOSS_HEIGHT 8
 .eqv BACKGROUND 0x444444
 .eqv BODY_COLOUR 0xff7700
 .eqv LASER_COLOUR 0x22eecc
@@ -47,8 +48,9 @@
 .eqv SPIKE_COLOUR 0xff0000
 .eqv FLOOR_LIGHT 0xbbbbcc
 .eqv FLOOR_DARK 0x888899
+.eqv SCORE_COLOUR 0xffcccc
 
-# player_states:
+# player:
 # 2 bytes: x position
 # 2 bytes: y position
 # 1 byte: x velocity
@@ -59,7 +61,7 @@
 # 1 byte: direction
 # 2 bytes: previous x position
 # 2 bytes: previous y position
-player_states: .space 14
+player: .space 14
 
 # laser:
 # 2 bytes: x position
@@ -83,14 +85,14 @@ laser: .space 10
 # 2 bytes: previous y position
 boss_states: .space 14
 
-# spike:
+# dart:
 # 2 bytes: x position
 # 2 bytes: y position
 # 1 byte: x velocity
 # 1 byte: y velocity
 # 2 bytes: previous x position
 # 2 bytes: previous y position
-spike: .space 10
+dart: .space 10
 
 # platforms:
 # 2 bytes: x position
@@ -120,70 +122,6 @@ main_title:
 	li $t0, BASE_ADDRESS
 	li $t1, 0x00ff00
 	
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 20($t0)
-	sw $t1, 24($t0)
-
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 268($t0)
-	sw $t1, 272($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 524($t0)
-	sw $t1, 528($t0)
-	sw $t1, 532($t0)
-	sw $t1, 536($t0)
-
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
-	sw $t1, 788($t0)
-	sw $t1, 792($t0)
-
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	sw $t1, 1040($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-
-	sw $t1, 1280($t0)
-	sw $t1, 1284($t0)
-	sw $t1, 1288($t0)
-	sw $t1, 1292($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1304($t0)
-
-	sw $t1, 1536($t0)
-	sw $t1, 1540($t0)
-	sw $t1, 1544($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1552($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1560($t0)
-
-	sw $t1, 1792($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1800($t0)
-	sw $t1, 1804($t0)
-	sw $t1, 1808($t0)
-	sw $t1, 1812($t0)
-	sw $t1, 1816($t0)
-
 	# title AB-58 
 	addi $t0, $t0, 8192
 	# first letter A
@@ -535,16 +473,16 @@ game:
 	li $t2, 57
 	li $t7, 5
 	li $t9, 1
-	sh $t0, player_states+0($zero)
-	sh $t2, player_states+2($zero)
-	sh $zero, player_states+4($zero)
-	sb $zero, player_states+5($zero)
-	sb $zero, player_states+6($zero)
-	sb $t7, player_states+7($zero)
-	sb $zero, player_states+8($zero)
-	sb $t9, player_states+9($zero)
-	sh $t0, player_states+10($zero)
-	sh $t2, player_states+12($zero)
+	sh $t0, player+0($zero)
+	sh $t2, player+2($zero)
+	sh $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
+	sb $t7, player+7($zero)
+	sb $zero, player+8($zero)
+	sb $t9, player+9($zero)
+	sh $t0, player+10($zero)
+	sh $t2, player+12($zero)
 	
 	# initialize laser states
 	li $t0, 50
@@ -568,23 +506,23 @@ game:
 	sh $zero, boss_states+4($zero)
 	sb $zero, boss_states+5($zero)
 	sb $zero, boss_states+6($zero)
-	sb $t7, player_states+7($zero)
-	sb $zero, player_states+8($zero)	
+	sb $t7, boss_states+7($zero)
+	sb $zero, boss_states+8($zero)	
 	sb $t9, boss_states+9($zero)
 	sh $t0, boss_states+10($zero)
 	sh $t2, boss_states+12($zero)
 	
-	# initialize spike states
+	# initialize dart states
 	li $t0, 60
 	li $t2, 0
 	li $t4, 0
 	li $t5, 0
-	sh $t0, spike+0($zero)
-	sh $t2, spike+2($zero)
-	sb $t4, spike+4($zero)	
-	sb $t5, spike+5($zero)	
-	sh $t0, spike+6($zero)
-	sh $t2, spike+8($zero)
+	sh $t0, dart+0($zero)
+	sh $t2, dart+2($zero)
+	sb $t4, dart+4($zero)	
+	sb $t5, dart+5($zero)	
+	sh $t0, dart+6($zero)
+	sh $t2, dart+8($zero)
 			
 	# initialize platform states		
 	li $t0, 27
@@ -632,16 +570,16 @@ game_check_keypress:
 	
 game_update_positions:
 	# apply gravity, update player position
-	lh $t0, player_states+0($zero)
-	lh $t2, player_states+2($zero)
-	lb $t4, player_states+4($zero)
-	lb $t5, player_states+5($zero)
+	lh $t0, player+0($zero)
+	lh $t2, player+2($zero)
+	lb $t4, player+4($zero)
+	lb $t5, player+5($zero)
 	addi $t5, $t5, GRAVITY
 	add $t0, $t0, $t4
 	add $t2, $t2, $t5
-	sh $t0, player_states+0($zero)
-	sh $t2, player_states+2($zero)
-	sb $t5, player_states+5($zero)
+	sh $t0, player+0($zero)
+	sh $t2, player+2($zero)
+	sb $t5, player+5($zero)
 	
 	# choose velocity for boss depending on jump state
 	
@@ -664,13 +602,16 @@ turn_slider:
 	
 	
 game_check_collisions:
-	# player states
-	lh $t0, player_states+0($zero) # x position
-	lh $t2, player_states+2($zero) # y position
-	lb $t4, player_states+4($zero) # x velocity
-	lb $t5, player_states+5($zero) # y velocity
-	lb $t6, player_states+6($zero) # jump state
 
+player_collisions:
+	# get player states
+	lh $t0, player+0($zero) # x position
+	lh $t2, player+2($zero) # y position
+	lb $t4, player+4($zero) # x velocity
+	lb $t5, player+5($zero) # y velocity
+	lb $t6, player+6($zero) # jump state
+	lb $t7, player+7($zero) # health points
+	
 player_floor:
 	# check player-floor collision
 	li $t1, FLOOR_HEIGHT
@@ -678,13 +619,10 @@ player_floor:
 	blt $t2, $t1, player_platforms
 	# update player states
 	move $t2, $t1
-	li $t4, 0
-	li $t5, 0
-	li $t6, 0
-	sh $t2, player_states+2($zero)	
-	sb $t4, player_states+4($zero)
-	sb $t5, player_states+5($zero)
-	sb $t6, player_states+6($zero)
+	sh $t2, player+2($zero)	
+	sb $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
 	j player_left_wall
 
 player_platforms:
@@ -703,14 +641,10 @@ player_platform_1:
 	addi $t9, $t9, 11
 	bgt $t0, $t9, player_platform_2 # check right edge of platform
 	# update player states accordingly
-	move $t2, $t8
-	li $t4, 0
-	li $t5, 0
-	li $t6, 0
-	sh $t2, player_states+2($zero)	
-	sb $t4, player_states+4($zero)
-	sb $t5, player_states+5($zero)
-	sb $t6, player_states+6($zero)
+	sh $t8, player+2($zero)	
+	sb $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
 	j player_slider
 
 player_platform_2:
@@ -725,14 +659,10 @@ player_platform_2:
 	addi $t9, $t9, 11
 	bgt $t0, $t9, player_platform_3 # check right edge of platform
 	# update player states accordingly
-	move $t2, $t8
-	li $t4, 0
-	li $t5, 0
-	li $t6, 0
-	sh $t2, player_states+2($zero)	
-	sb $t4, player_states+4($zero)
-	sb $t5, player_states+5($zero)
-	sb $t6, player_states+6($zero)
+	sh $t8, player+2($zero)	
+	sb $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
 	j player_slider
 
 player_platform_3:
@@ -747,14 +677,10 @@ player_platform_3:
 	addi $t9, $t9, 11
 	bgt $t0, $t9, player_platform_4 # check right edge of platform
 	# update player states accordingly
-	move $t2, $t8
-	li $t4, 0
-	li $t5, 0
-	li $t6, 0
-	sh $t2, player_states+2($zero)	
-	sb $t4, player_states+4($zero)
-	sb $t5, player_states+5($zero)
-	sb $t6, player_states+6($zero)
+	sh $t8, player+2($zero)	
+	sb $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
 	j player_slider
 
 player_platform_4:
@@ -769,14 +695,10 @@ player_platform_4:
 	addi $t9, $t9, 11
 	bgt $t0, $t9, player_platform_5 # check right edge of platform
 	# update player states accordingly
-	move $t2, $t8
-	li $t4, 0
-	li $t5, 0
-	li $t6, 0
-	sh $t2, player_states+2($zero)	
-	sb $t4, player_states+4($zero)
-	sb $t5, player_states+5($zero)
-	sb $t6, player_states+6($zero)
+	sh $t8, player+2($zero)	
+	sb $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
 	j player_slider
 
 player_platform_5:
@@ -791,14 +713,10 @@ player_platform_5:
 	addi $t9, $t9, 11
 	bgt $t0, $t9, player_slider # check right edge of platform
 	# update player states accordingly
-	move $t2, $t8
-	li $t4, 0
-	li $t5, 0
-	li $t6, 0
-	sh $t2, player_states+2($zero)	
-	sb $t4, player_states+4($zero)
-	sb $t5, player_states+5($zero)
-	sb $t6, player_states+6($zero)
+	sh $t8, player+2($zero)	
+	sb $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
 	j player_slider
 
 player_slider:
@@ -813,44 +731,126 @@ player_slider:
 	addi $t9, $t9, 11
 	bgt $t0, $t9, player_left_wall # check right edge of platform
 	# update player states accordingly
-	move $t2, $t8
 	lb $t4, slider+4($zero)
 	lb $t5, slider+5($zero)
-	li $t6, 0
-	sh $t2, player_states+2($zero)	
-	sb $t4, player_states+4($zero)
-	sb $t5, player_states+5($zero)
-	sb $t6, player_states+6($zero)
+	sh $t8, player+2($zero)	
+	sb $t4, player+4($zero)
+	sb $t5, player+5($zero)
+	sb $zero, player+6($zero)
 
 player_left_wall:
 	# check player-left_wall collision
 	bgt $t0, 0, player_right_wall
-	li $t0, 0
-	li $t4, 0
-	sh $t0, player_states+0($zero)
-	sb $t4, player_states+4($zero)
+	sh $zero, player+0($zero)
+	sb $zero, player+4($zero)
 
 player_right_wall:
 	# check player-right_wall collision
-	blt $t0, 60, player_enemy
+	blt $t0, 60, player_boss
 	li $t0, 60
-	li $t4, 0
-	sh $t0, player_states+0($zero)
-	sb $t4, player_states+4($zero)
+	sh $t0, player+0($zero)
+	sb $zero, player+4($zero)
 
-player_enemy:
-	# check player-enemy collision
+player_boss:
+	# check player-boss collision
+	lh $t8, boss_states+0($zero) # boss x position
+	addi $t8, $t8, -4
+	bgt $t8, $t0, player_dart # check left x bound
+	addi $t8, $t8, 11	
+	blt $t8, $t0, player_dart # check right x bound	
+	lh $t9, boss_states+2($zero) # boss y position
+	addi $t9, $t9, -5
+	bgt $t9, $t0, player_dart # check upper y bound
+	addi $t9, $t9, 13	
+	blt $t9, $t0, player_dart # check lower x bound
+	# update player states accordingly
+	lb $t9, player+9($zero) # get player direction to calculate knockback
+	beqz $t9, knockback_right
+	li $t4, -3
+	j finish_knockback
+knockback_right:
+	li $t4, 3
+finish_knockback:
+	li $t5, -3 # upwards knockback	
+	li $t6, 2 # cannot jump or double jump
+	addi $t7, $t7, -1 # lose one life
+	li $t8, 1
+	sb $t4, player+4($zero)
+	sb $t5, player+5($zero)	
+	sb $t6, player+6($zero)		
+	sb $t7, player+7($zero)
+	sb $t8, player+8($zero)
 	
-player_projectile:
+	
+	
+	
+player_dart:
 	# check player-projectile collision
+
+boss_collisions:
+	# get boss states
+	lh $t0, boss_states+0($zero) # x position
+	lh $t2, boss_states+2($zero) # y position
+	lb $t4, boss_states+4($zero) # x velocity
+	lb $t5, boss_states+5($zero) # y velocity
+	lb $t6, boss_states+6($zero) # jump state
+
+boss_floor:
+	# check boss-floor collision
+	li $t1, FLOOR_HEIGHT
+	addi $t1, $t1, -BOSS_HEIGHT
+	blt $t2, $t1, boss_platforms
+	# update boss states
+	move $t2, $t1
+	sh $t2, boss_states+2($zero)	
+	sb $zero, boss_states+4($zero)
+	sb $zero, boss_states+5($zero)
+	sb $zero, boss_states+6($zero)
+	j boss_left_wall
+
+boss_platforms:
+	# if velocity is going up, do not check for platform collision
+	blt $t5, $zero, boss_left_wall
+
+boss_platform_1:
+	# check boss-platform_1 collision
+	lh $t8, platform_1+2($zero)
+	bgt $t2, $t8, boss_left_wall # check y position
+	addi $t8, $t8, -BOSS_HEIGHT
+	blt $t2, $t8, boss_left_wall # check foot position
+	lh $t9, platform_1+0($zero)
+	addi $t9, $t9, -4
+	blt $t0, $t9, boss_left_wall # check left edge of platform
+	addi $t9, $t9, 11
+	bgt $t0, $t9, boss_left_wall # check right edge of platform
+	# update player states accordingly
+	sh $t8, boss_states+2($zero)	
+	sb $zero, boss_states+4($zero)
+	sb $zero, boss_states+5($zero)
+	sb $zero, boss_states+6($zero)
+
+boss_left_wall:
+	# check boss-left_wall collision
+	bgt $t0, 0, boss_right_wall
+	sh $zero, boss_states+0($zero)
+	sb $zero, boss_states+4($zero)
+
+boss_right_wall:
+	# check boss-right_wall collision
+	blt $t0, 60, game_update_screen
+	li $t0, 60
+	sh $t0, player+0($zero)
+	sb $zero, player+4($zero)
+
+
 
 game_update_screen:
 	#sw $t1, 16380($t0)
 
 erase_player:
 	# erase player
-	lh $t0, player_states+10($zero) # previous x position
-	lh $t2, player_states+12($zero) # previous y position
+	lh $t0, player+10($zero) # previous x position
+	lh $t2, player+12($zero) # previous y position
 	li $t1, BACKGROUND # background colour
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
@@ -1214,19 +1214,19 @@ paint_boss:
 	
 paint_player:
 	# paint player
-	lh $t0, player_states+0($zero) # x position
-	lh $t2, player_states+2($zero) # y position
-	sh $t0, player_states+10($zero) # store as previous x position
-	sh $t2, player_states+12($zero) # store as previous y position
+	lh $t0, player+0($zero) # x position
+	lh $t2, player+2($zero) # y position
+	sh $t0, player+10($zero) # store as previous x position
+	sh $t2, player+12($zero) # store as previous y position
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	# determine body colour
-	lb $t8, player_states+8($zero)
+	lb $t8, player+8($zero)
 	bne $t8, 1, is_not_damaged
 	li $t1, SPIKE_COLOUR
-	j is_paint_player_continue
+	j paint_player_continue
 is_not_damaged:
 	li $t1, BODY_COLOUR
 
@@ -1243,7 +1243,7 @@ paint_player_continue:
 	sw $t1, 776($t0)
 	sw $t1, 780($t0)
 	# parts dependent of direction	
-	lb $t9, player_states+9($zero)
+	lb $t9, player+9($zero)
 	beqz $t9, player_facing_left
 	sw $t1, 12($t0)
 	sw $t1, 256($t0)
@@ -1269,7 +1269,7 @@ player_facing_left:
 paint_laser:
 	# paint laser if velocity is not zero
 	lb $t4, laser+4($zero)
-	beqz $t4, paint_spike
+	beqz $t4, paint_dart
 	lh $t0, laser+0($zero) # x position
 	lh $t2, laser+2($zero) # y position
 	sh $t0, laser+6($zero) # store as previous x position
@@ -1282,18 +1282,18 @@ paint_laser:
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 
-paint_spike:
-	# paint spike if velocity is not zero
-	lb $t5, spike+4($zero)
+paint_dart:
+	# paint dart if velocity is not zero
+	lb $t5, dart+4($zero)
 	beqz $t5, paint_hearts
-	lh $t0, spike+0($zero) # x position
-	lh $t2, spike+2($zero) # y position
-	sh $t0, spike+6($zero) # store as previous x position
-	sh $t2, spike+8($zero) # store as previous y position
+	lh $t0, dart+0($zero) # x position
+	lh $t2, dart+2($zero) # y position
+	sh $t0, dart+6($zero) # store as previous x position
+	sh $t2, dart+8($zero) # store as previous y position
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
-	addi $t0, $t0, BASE_ADDRESS # spike location in $t0
+	addi $t0, $t0, BASE_ADDRESS # dart location in $t0
 	li $t1, SPIKE_COLOUR
 	sw $t1, 0($t0)
 	sw $t1, 256($t0)
@@ -1301,48 +1301,54 @@ paint_spike:
 
 paint_hearts:
 	# paint hearts if player is taking damage
-	lb $t8, player_states+8($zero)
+	lb $t8, player+8($zero)
 	bne $t8, 1, paint_timer
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260
-	li $t1, SPIKE_COLOUR
-	lb $t7, player_states+7($zero) # health
+	lb $t7, player+7($zero) # health
+	beqz $t7, end_screen
 paint_hearts_loop:
+	li $t1, SCORE_COLOUR
+	sw $t1, 268($t0)
+	li $t1, SPIKE_COLOUR	
+	sw $t1, 4($t0)
+	sw $t1, 12($t0)
+	sw $t1, 256($t0)
 	sw $t1, 260($t0)
 	sw $t1, 264($t0)
 	sw $t1, 272($t0)
-	sw $t1, 276($t0)
 	sw $t1, 512($t0)
 	sw $t1, 516($t0)
 	sw $t1, 520($t0)
 	sw $t1, 524($t0)
 	sw $t1, 528($t0)
-	sw $t1, 536($t0)
-	sw $t1, 768($t0)
 	sw $t1, 772($t0)
 	sw $t1, 776($t0)
 	sw $t1, 780($t0)
-	sw $t1, 788($t0)
-	sw $t1, 792($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
 	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	sw $t1, 1040($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-	sw $t1, 1284($t0)
-	sw $t1, 1288($t0)
-	sw $t1, 1292($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1544($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1552($t0)
-	sw $t1, 1804($t0)
-	addi $t0, $t0, 32
+	addi $t0, $t0, 24
 	addi $t7, $t7, -1
 	bnez $t7, paint_hearts_loop
+	# erase previous heart
+	li $t1, BACKGROUND
+	sw $t1, 268($t0)
+	sw $t1, 4($t0)
+	sw $t1, 12($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1032($t0)
+	# player not taking damage
+	sb $zero, player+8($zero)	
 
 paint_timer:
 
@@ -1360,79 +1366,102 @@ game_keypressed:
 	beq $t8, 0x64, d_pressed
 	beq $t8, 0x66, f_pressed
 	beq $t8, 0x6a, j_pressed
+	beq $t8, 0x6c, l_pressed	
 	beq $t8, 0x71, q_pressed
 	beq $t8, 0x72, r_pressed
 	j game_update_positions
 
 a_pressed:
-	# only left flip if jump state is 1
-	lb $t6, player_states+6($zero)
+	# only left double jump if jump state is 1
+	lb $t6, player+6($zero)
 	bne $t6, 1, game_update_positions
-left_flip:
+left_dbl:
 	li $t4, -1 # left speed
-	sb $t4, player_states+4($zero)
+	sb $t4, player+4($zero)
 	li $t5, -4 # up speed
-	sb $t5, player_states+5($zero)
+	sb $t5, player+5($zero)
 	li $t6, 2 # new jump state
-	sb $t6, player_states+6($zero)
+	sb $t6, player+6($zero)
 	li $t9, 0 # facing left
-	sb $t9, player_states+9($zero)
+	sb $t9, player+9($zero)
 	j game_update_positions
 
 s_pressed:
 	li $t9, 0 # facing left
-	sb $t9, player_states+9($zero)
+	sb $t9, player+9($zero)
 	# only move left if jump state is 0
-	lb $t6, player_states+6($zero)
+	lb $t6, player+6($zero)
 	bne $t6, 0, game_update_positions
 move_left:
-	lb $t4, player_states+4($zero)
+	lb $t4, player+4($zero)
 	add $t4, $t4, -1 # left speed
-	sb $t4, player_states+4($zero)
+	sb $t4, player+4($zero)
 	li $t6, 1 # new jump state
-	sb $t6, player_states+6($zero)
+	sb $t6, player+6($zero)
 	j game_update_positions
 
 d_pressed:
 	li $t9, 1 # facing right
-	sb $t9, player_states+9($zero)
+	sb $t9, player+9($zero)
 	# only move right if jump state is 0
-	lb $t6, player_states+6($zero)
+	lb $t6, player+6($zero)
 	bne $t6, 0, game_update_positions
 move_right:
-	lb $t4, player_states+4($zero)
+	lb $t4, player+4($zero)
 	add $t4, $t4, 1 # right speed
-	sb $t4, player_states+4($zero)
+	sb $t4, player+4($zero)
 	li $t6, 1 # new jump state
-	sb $t6, player_states+6($zero)
+	sb $t6, player+6($zero)
 	j game_update_positions
 
 f_pressed:
-	# only right flip if jump state is 1
-	lb $t6, player_states+6($zero)
+	# only right double jump if jump state is 1
+	lb $t6, player+6($zero)
 	bne $t6, 1, game_update_positions
-right_flip:
+right_dbl:
 	li $t4, 1 # right speed
-	sb $t4, player_states+4($zero)
+	sb $t4, player+4($zero)
 	li $t5, -4 # up speed
-	sb $t5, player_states+5($zero)
+	sb $t5, player+5($zero)
 	li $t6, 2 # new jump state
-	sb $t6, player_states+6($zero)
+	sb $t6, player+6($zero)
 	li $t9, 1 # facing right
-	sb $t9, player_states+9($zero)
+	sb $t9, player+9($zero)
 	j game_update_positions
 
 j_pressed:
 	# only jump if jump state is 0 
-	lb $t6, player_states+6($zero)
+	lb $t6, player+6($zero)
 	bne $t6, 0, game_update_positions
 jump:
 	li $t4, 0 # x speed
-	sb $t4, player_states+4($zero)
+	sb $t4, player+4($zero)
 	li $t5, -4 # jump speed
-	sb $t5, player_states+5($zero)	
+	sb $t5, player+5($zero)	
 	li $t6, 1 # new jump state
-	sb $t6, player_states+6($zero)
+	sb $t6, player+6($zero)
+	j game_update_positions
+
+l_pressed:
+	# only shoot laser if laser velocity is zero
+	lb $t4, laser+4($zero)
+	bnez $t4, game_update_positions
+	lh $t0, player+0($zero) # player x position
+	lh $t2, player+2($zero) # player y position
+	# decide whether to shoot left or right
+	lb $t9, player+9($zero)
+	beqz $t9, shoot_laser_left
+	li $t4, -2
+	addi $t0, $t0, 2
+	addi $t2, $t2, 1 
+	j finish_shooting_laser
+shoot_laser_left:
+	li $t4, -2	
+	addi $t2, $t2, 1 
+finish_shooting_laser:
+	sh $t0, laser+0($zero) # store new laser x position
+	sh $t2, laser+2($zero) # store new laser y position
+	sb $t4, laser+4($zero) # store new laser x velocity	
 	j game_update_positions
 
 q_pressed:
@@ -1442,14 +1471,12 @@ r_pressed:
 	j game
 
 end_screen:
+	jal reset_screen
+
 	li $t1, 0xff0000
 	sw $t1, 0($t0)
 	sw $t1, 256($t0)
-	sw $t1, 512($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 2048($t0)
-	sw $t1, 4096($t0)
-	sw $t1, 8192($t0)
+
 	li $v0, 10 
 	syscall
 
