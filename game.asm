@@ -40,11 +40,11 @@
 .eqv GRAVITY 1
 .eqv PLAYER_HEIGHT 5
 .eqv FLOOR_HEIGHT 62
-.eqv FLOOR_COLOUR 0x888899
 .eqv BACKGROUND 0x444444
 .eqv BODY_COLOUR 0x22ffaa
 .eqv GOGGLE_COLOUR 0xff22aa
-.eqv PLATFORM_COLOUR 0xbbbbcc
+.eqv FLOOR_LIGHT 0xbbbbcc
+.eqv FLOOR_DARK 0x888899
 
 
 # player_states:
@@ -67,6 +67,17 @@ platform_1: .space 4
 platform_2: .space 4
 platform_3: .space 4
 platform_4: .space 4
+platform_5: .space 4
+platform_6: .space 4
+
+# moving platform:
+# 2 bytes: x position
+# 2 bytes: y position
+# 2 bytes: x position
+# 2 bytes: y position
+# 1 byte: x velocity
+slider: .space 9
+
 
 .globl main_title
 .text
@@ -111,7 +122,7 @@ game:
 	li $t1, FLOOR_HEIGHT
 	mul $t1, $t1, 256
 	add $t0, $t0, $t1 # floor height in $t0
-	li $t1, FLOOR_COLOUR # floor colour
+	li $t1, FLOOR_DARK
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -177,38 +188,115 @@ game:
 	sw $t1, 248($t0)
 	sw $t1, 252($t0)
 	
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
+	sw $t1, 296($t0)
+	sw $t1, 300($t0)
+	sw $t1, 304($t0)
+	sw $t1, 308($t0)
+	sw $t1, 312($t0)
+	sw $t1, 316($t0)
+	sw $t1, 320($t0)
+	sw $t1, 324($t0)
+	sw $t1, 328($t0)
+	sw $t1, 332($t0)
+	sw $t1, 336($t0)
+	sw $t1, 340($t0)
+	sw $t1, 344($t0)
+	sw $t1, 348($t0)
+	sw $t1, 352($t0)
+	sw $t1, 356($t0)
+	sw $t1, 360($t0)
+	sw $t1, 364($t0)
+	sw $t1, 368($t0)
+	sw $t1, 372($t0)
+	sw $t1, 376($t0)
+	sw $t1, 380($t0)
+	sw $t1, 384($t0)
+	sw $t1, 388($t0)
+	sw $t1, 392($t0)
+	sw $t1, 396($t0)
+	sw $t1, 400($t0)
+	sw $t1, 404($t0)
+	sw $t1, 408($t0)
+	sw $t1, 412($t0)
+	sw $t1, 416($t0)
+	sw $t1, 420($t0)
+	sw $t1, 424($t0)
+	sw $t1, 428($t0)
+	sw $t1, 432($t0)
+	sw $t1, 436($t0)
+	sw $t1, 440($t0)
+	sw $t1, 444($t0)
+	sw $t1, 448($t0)
+	sw $t1, 452($t0)
+	sw $t1, 456($t0)
+	sw $t1, 460($t0)
+	sw $t1, 464($t0)
+	sw $t1, 468($t0)
+	sw $t1, 472($t0)
+	sw $t1, 476($t0)
+	sw $t1, 480($t0)
+	sw $t1, 484($t0)
+	sw $t1, 488($t0)
+	sw $t1, 492($t0)
+	sw $t1, 496($t0)
+	sw $t1, 500($t0)
+	sw $t1, 504($t0)
+	sw $t1, 508($t0)
+	
 	# initialize player states
-	li $t0, 30
-	li $t2, 50
+	li $t0, 0
+	li $t2, 57
+	li $t9, 1
 	sh $t0, player_states+0($zero)
 	sh $t2, player_states+2($zero)
 	sh $zero, player_states+4($zero)
 	sb $zero, player_states+5($zero)
 	sb $zero, player_states+6($zero)
-	sb $zero, player_states+9($zero)
+	sb $t9, player_states+9($zero)
 	sh $t0, player_states+10($zero)
 	sh $t2, player_states+12($zero)
 		
 	# initialize platform states		
-	li $t0, 20
+	li $t0, 27
 	li $t2, 55
 	sh $t0, platform_1+0($zero)
 	sh $t2, platform_1+2($zero)
 
-	li $t0, 30
-	li $t2, 48
+	li $t0, 40
+	li $t2, 44
 	sh $t0, platform_2+0($zero)
 	sh $t2, platform_2+2($zero)
 
-	li $t0, 10
-	li $t2, 41
+	li $t0, 53
+	li $t2, 33
 	sh $t0, platform_3+0($zero)
 	sh $t2, platform_3+2($zero)
 
-	li $t0, 40
-	li $t2, 34
+	li $t0, 8
+	li $t2, 44
 	sh $t0, platform_4+0($zero)
 	sh $t2, platform_4+2($zero)
+
+	li $t0, 6
+	li $t2, 37
+	sh $t0, platform_5+0($zero)
+	sh $t2, platform_5+2($zero)
+
+	li $t0, 4
+	li $t2, 30
+	sh $t0, platform_6+0($zero)
+	sh $t2, platform_6+2($zero)
+
 
 game_check_keypress:
 	li $t9, 0xffff0000
@@ -325,10 +413,54 @@ player_platform_3:
 player_platform_4:
 	# check player-platform_4 collision
 	lh $t8, platform_4+2($zero)
+	bgt $t2, $t8, player_platform_5 # check y position
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_platform_5 # check foot position
+	lh $t9, platform_4+0($zero)
+	addi $t9, $t9, -2
+	blt $t0, $t9, player_platform_5 # check left edge of platform
+	addi $t9, $t9, 11
+	bgt $t0, $t9, player_platform_5 # check right edge of platform
+	# update player states accordingly
+	move $t2, $t8
+	li $t4, 0
+	li $t5, 0
+	li $t6, 0
+	sh $t2, player_states+2($zero)	
+	sb $t4, player_states+4($zero)
+	sb $t5, player_states+5($zero)
+	sb $t6, player_states+6($zero)
+	j player_left_wall
+
+player_platform_5:
+	# check player-platform_5 collision
+	lh $t8, platform_5+2($zero)
+	bgt $t2, $t8, player_platform_6 # check y position
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_platform_6 # check foot position
+	lh $t9, platform_5+0($zero)
+	addi $t9, $t9, -2
+	blt $t0, $t9, player_platform_6 # check left edge of platform
+	addi $t9, $t9, 11
+	bgt $t0, $t9, player_platform_6 # check right edge of platform
+	# update player states accordingly
+	move $t2, $t8
+	li $t4, 0
+	li $t5, 0
+	li $t6, 0
+	sh $t2, player_states+2($zero)	
+	sb $t4, player_states+4($zero)
+	sb $t5, player_states+5($zero)
+	sb $t6, player_states+6($zero)
+	j player_left_wall
+
+player_platform_6:
+	# check player-platform_6 collision
+	lh $t8, platform_6+2($zero)
 	bgt $t2, $t8, player_left_wall # check y position
 	addi $t8, $t8, -PLAYER_HEIGHT
 	blt $t2, $t8, player_left_wall # check foot position
-	lh $t9, platform_4+0($zero)
+	lh $t9, platform_6+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_left_wall # check left edge of platform
 	addi $t9, $t9, 11
@@ -402,7 +534,7 @@ paint_platforms:
 	# paint platform_1
 	lh $t0, platform_1+0($zero) # x position	
 	lh $t2, platform_1+2($zero) # y position
-	li $t1, PLATFORM_COLOUR # platform colour
+	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
@@ -417,12 +549,22 @@ paint_platforms:
 	sw $t1, 28($t0)
 	sw $t1, 32($t0)
 	sw $t1, 36($t0)
-	sw $t1, 40($t0)	
+	sw $t1, 40($t0)
+	li $t1, FLOOR_DARK	
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
 
 	# paint platform_2
 	lh $t0, platform_2+0($zero) # x position	
 	lh $t2, platform_2+2($zero) # y position
-	li $t1, PLATFORM_COLOUR # platform colour
+	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
@@ -438,11 +580,21 @@ paint_platforms:
 	sw $t1, 32($t0)
 	sw $t1, 36($t0)
 	sw $t1, 40($t0)	
+	li $t1, FLOOR_DARK	
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
 
 	# paint platform_3
 	lh $t0, platform_3+0($zero) # x position	
 	lh $t2, platform_3+2($zero) # y position
-	li $t1, PLATFORM_COLOUR # platform colour
+	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
@@ -458,11 +610,21 @@ paint_platforms:
 	sw $t1, 32($t0)
 	sw $t1, 36($t0)
 	sw $t1, 40($t0)	
+	li $t1, FLOOR_DARK	
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
 
 	# paint platform_4
 	lh $t0, platform_4+0($zero) # x position	
 	lh $t2, platform_4+2($zero) # y position
-	li $t1, PLATFORM_COLOUR # platform colour
+	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
@@ -478,6 +640,76 @@ paint_platforms:
 	sw $t1, 32($t0)
 	sw $t1, 36($t0)
 	sw $t1, 40($t0)	
+	li $t1, FLOOR_DARK	
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
+
+	# paint platform_5
+	lh $t0, platform_5+0($zero) # x position	
+	lh $t2, platform_5+2($zero) # y position
+	li $t1, FLOOR_LIGHT
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 4 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 28($t0)
+	sw $t1, 32($t0)
+	sw $t1, 36($t0)
+	sw $t1, 40($t0)	
+	li $t1, FLOOR_DARK	
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
+
+	# paint platform_6
+	lh $t0, platform_6+0($zero) # x position	
+	lh $t2, platform_6+2($zero) # y position
+	li $t1, FLOOR_LIGHT
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 4 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 28($t0)
+	sw $t1, 32($t0)
+	sw $t1, 36($t0)
+	sw $t1, 40($t0)	
+	li $t1, FLOOR_DARK	
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
 
 paint_player:
 	# paint player
@@ -559,6 +791,8 @@ left_flip:
 	j game_update_positions
 
 w_pressed:
+	li $t9, 0 # facing left
+	sb $t9, player_states+9($zero)
 	# only move left if jump state is 0
 	lb $t6, player_states+6($zero)
 	bne $t6, 0, game_update_positions
@@ -567,11 +801,11 @@ move_left:
 	sb $t4, player_states+4($zero)
 	li $t6, 1 # new jump state
 	sb $t6, player_states+6($zero)
-	li $t9, 0 # facing left
-	sb $t9, player_states+9($zero)
 	j game_update_positions
 
 e_pressed:
+	li $t9, 1 # facing right
+	sb $t9, player_states+9($zero)
 	# only move right if jump state is 0
 	lb $t6, player_states+6($zero)
 	bne $t6, 0, game_update_positions
@@ -580,8 +814,6 @@ move_right:
 	sb $t4, player_states+4($zero)
 	li $t6, 1 # new jump state
 	sb $t6, player_states+6($zero)
-	li $t9, 1 # facing right
-	sb $t9, player_states+9($zero)
 	j game_update_positions
 
 r_pressed:
