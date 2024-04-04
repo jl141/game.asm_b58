@@ -468,6 +468,33 @@ draw_floor:
 game:
 	jal reset_screen
 		
+	# print hearts
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 260 # starting point
+	li $t2, 5 # counter
+init_hearts_loop:
+	li $t1, SCORE_COLOUR
+	sw $t1, 268($t0)
+	li $t1, SPIKE_COLOUR	
+	sw $t1, 4($t0)
+	sw $t1, 12($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1032($t0)
+	addi $t0, $t0, 24
+	addi $t2, $t2, -1
+	bnez $t2, init_hearts_loop
+	
 	# initialize player states
 	li $t0, 1
 	li $t2, 57
@@ -581,9 +608,22 @@ game_update_positions:
 	sh $t2, player+2($zero)
 	sb $t5, player+5($zero)
 	
+	# update laser x position
+	lh $t0, laser+0($zero)
+	lb $t4, laser+4($zero)
+	add $t0, $t0, $t4
+	sh $t0, laser+0($zero)
+
 	# choose velocity for boss depending on jump state
+
+	# update dart y position
+	lh $t2, dart+2($zero)
+	lb $t5, dart+5($zero)
+	add $t2, $t2, $t5
+	sh $t2, dart+2($zero)
+
 	
-	# update slider x position then velocity
+	# update slider position then velocity
 	lh $t0, slider+0($zero)
 	lh $t2, slider+2($zero)
 	lb $t4, slider+4($zero)
@@ -876,6 +916,18 @@ erase_player:
 	sw $t1, 1028($t0)
 	sw $t1, 1032($t0)
 	sw $t1, 1036($t0)
+
+erase_laser:
+	# erase laser
+	lh $t0, laser+6($zero) # previous x position	
+	lh $t2, laser+8($zero) # previous y position
+	li $t1, BACKGROUND
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 4 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS # laser location in $t0
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
 
 erase_boss:
 	# erase boss
@@ -1304,7 +1356,7 @@ paint_hearts:
 	lb $t8, player+8($zero)
 	bne $t8, 1, paint_timer
 	li $t0, BASE_ADDRESS
-	addi $t0, $t0, 260
+	addi $t0, $t0, 260 # starting point
 	lb $t7, player+7($zero) # health
 	beqz $t7, end_screen
 paint_hearts_loop:
