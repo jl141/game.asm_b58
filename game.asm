@@ -56,10 +56,19 @@
 # 1 byte: jump state
 # 1 byte: health points
 # 1 byte: damaged state
-# 1 byte: appearance state
+# 1 byte: direction
 # 2 bytes: previous x position
 # 2 bytes: previous y position
 player_states: .space 14
+
+# laser:
+# 2 bytes: x position
+# 2 bytes: y position
+# 1 byte: x velocity
+# 1 byte: y velocity
+# 2 bytes: previous x position
+# 2 bytes: previous y position
+laser: .space 10
 
 # boss_states:
 # 2 bytes: x position
@@ -69,10 +78,19 @@ player_states: .space 14
 # 1 byte: jump state
 # 1 byte: health points
 # 1 byte: damaged state
-# 1 byte: appearance state
+# 1 byte: shooting
 # 2 bytes: previous x position
 # 2 bytes: previous y position
 boss_states: .space 14
+
+# spike:
+# 2 bytes: x position
+# 2 bytes: y position
+# 1 byte: x velocity
+# 1 byte: y velocity
+# 2 bytes: previous x position
+# 2 bytes: previous y position
+spike: .space 10
 
 # platforms:
 # 2 bytes: x position
@@ -101,13 +119,255 @@ main_title:
 	jal reset_screen
 	li $t0, BASE_ADDRESS
 	li $t1, 0x00ff00
+	
 	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+
 	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+
 	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+
 	sw $t1, 1024($t0)
-	sw $t1, 2048($t0)
-	sw $t1, 4096($t0)
-	sw $t1, 8192($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+
+	# title AB-58 
+	addi $t0, $t0, 8192
+	# first letter A
+	addi $t0, $t0, 48
+	li $t1, BODY_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 516($t0)
+	li $t1, LASER_COLOUR
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	li $t1, BODY_COLOUR
+	sw $t1, 532($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	li $t1, LASER_COLOUR	
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	li $t1, BODY_COLOUR
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+	
+	# second letter B 
+	addi $t0, $t0, 32
+	li $t1, BOSS_COLOUR
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 256($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+
+	# third char - 
+	addi $t0, $t0, 32
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+
+	# fourth char 5
+	addi $t0, $t0, 32
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+
+	# fifth char 8
+	addi $t0, $t0, 32
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+
 main_title_loop:
 	li $t9, 0xffff0000
 	lw $t8, 0($t9)
@@ -129,9 +389,8 @@ reset_screen_loop:
 	sw $t1, BASE_ADDRESS($t2)
 	addi $t2, $t2, 4
 	bne $t2, 16380, reset_screen_loop
-	jr $ra
-
-game:
+draw_floor:
+	# draw floor
 	li $t0, BASE_ADDRESS
 	li $t1, FLOOR_HEIGHT
 	mul $t1, $t1, 256
@@ -201,7 +460,6 @@ game:
 	sw $t1, 244($t0)
 	sw $t1, 248($t0)
 	sw $t1, 252($t0)
-	
 	sw $t1, 256($t0)
 	sw $t1, 260($t0)
 	sw $t1, 264($t0)
@@ -267,32 +525,67 @@ game:
 	sw $t1, 504($t0)
 	sw $t1, 508($t0)
 	
+	jr $ra
+
+game:
+	jal reset_screen
+		
 	# initialize player states
 	li $t0, 1
 	li $t2, 57
+	li $t7, 5
 	li $t9, 1
 	sh $t0, player_states+0($zero)
 	sh $t2, player_states+2($zero)
 	sh $zero, player_states+4($zero)
 	sb $zero, player_states+5($zero)
 	sb $zero, player_states+6($zero)
+	sb $t7, player_states+7($zero)
+	sb $zero, player_states+8($zero)
 	sb $t9, player_states+9($zero)
 	sh $t0, player_states+10($zero)
 	sh $t2, player_states+12($zero)
-		
+	
+	# initialize laser states
+	li $t0, 50
+	li $t2, 0
+	li $t4, 0
+	li $t5, 0
+	sh $t0, laser+0($zero)
+	sh $t2, laser+2($zero)
+	sb $t4, laser+4($zero)	
+	sb $t5, laser+5($zero)	
+	sh $t0, laser+6($zero)
+	sh $t2, laser+8($zero)
+	
 	# initialize boss states
 	li $t0, 56
-	li $t2, 53
+	li $t2, 54
+	li $t7, 100
 	li $t9, 0
 	sh $t0, boss_states+0($zero)
 	sh $t2, boss_states+2($zero)
 	sh $zero, boss_states+4($zero)
 	sb $zero, boss_states+5($zero)
 	sb $zero, boss_states+6($zero)
+	sb $t7, player_states+7($zero)
+	sb $zero, player_states+8($zero)	
 	sb $t9, boss_states+9($zero)
 	sh $t0, boss_states+10($zero)
 	sh $t2, boss_states+12($zero)
-		
+	
+	# initialize spike states
+	li $t0, 60
+	li $t2, 0
+	li $t4, 0
+	li $t5, 0
+	sh $t0, spike+0($zero)
+	sh $t2, spike+2($zero)
+	sb $t4, spike+4($zero)	
+	sb $t5, spike+5($zero)	
+	sh $t0, spike+6($zero)
+	sh $t2, spike+8($zero)
+			
 	# initialize platform states		
 	li $t0, 27
 	li $t2, 55
@@ -323,14 +616,14 @@ game:
 	li $t0, 13
 	li $t2, 37
 	li $t4, 1
-	li $t5, 0
+	li $t5, -1
 	sh $t0, slider+0($zero)
 	sh $t2, slider+2($zero)
 	sb $t4, slider+4($zero)	
 	sb $t5, slider+5($zero)	
 	sh $t0, slider+6($zero)
 	sh $t2, slider+8($zero)
-
+	
 
 game_check_keypress:
 	li $t9, 0xffff0000
@@ -349,6 +642,8 @@ game_update_positions:
 	sh $t0, player_states+0($zero)
 	sh $t2, player_states+2($zero)
 	sb $t5, player_states+5($zero)
+	
+	# choose velocity for boss depending on jump state
 	
 	# update slider x position then velocity
 	lh $t0, slider+0($zero)
@@ -582,6 +877,79 @@ erase_player:
 	sw $t1, 1032($t0)
 	sw $t1, 1036($t0)
 
+erase_boss:
+	# erase boss
+	lh $t0, boss_states+10($zero) # previous x position
+	lh $t2, boss_states+12($zero) # previous y position
+	li $t1, BACKGROUND # background colour
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 4 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+
 erase_slider:
 	# erase slider
 	lh $t0, slider+6($zero) # previous x position	
@@ -763,47 +1131,17 @@ paint_platforms:
 	sw $t1, 288($t0)
 	sw $t1, 292($t0)
 
-	# paint platform_6
-	lh $t0, platform_6+0($zero) # x position	
-	lh $t2, platform_6+2($zero) # y position
-	li $t1, FLOOR_LIGHT
-	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
-	add $t0, $t0, $t2
-	addi $t0, $t0, BASE_ADDRESS
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 20($t0)
-	sw $t1, 24($t0)
-	sw $t1, 28($t0)
-	sw $t1, 32($t0)
-	sw $t1, 36($t0)
-	sw $t1, 40($t0)	
-	li $t1, FLOOR_DARK	
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 268($t0)
-	sw $t1, 272($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-	sw $t1, 284($t0)
-	sw $t1, 288($t0)
-	sw $t1, 292($t0)
-
 paint_slider:
 	# paint slider
 	lh $t0, slider+0($zero) # x position
 	lh $t2, slider+2($zero) # y position
 	sh $t0, slider+6($zero) # store as previous x position
 	sh $t2, slider+8($zero) # store as previous y position
-	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
-	addi $t0, $t0, BASE_ADDRESS
+	addi $t0, $t0, BASE_ADDRESS # slider location in $t0
+	li $t1, FLOOR_LIGHT
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -826,6 +1164,54 @@ paint_slider:
 	sw $t1, 288($t0)
 	sw $t1, 292($t0)
 
+paint_boss: 
+	# paint boss
+	lh $t0, boss_states+0($zero) # x position
+	lh $t2, boss_states+2($zero) # y position
+	sh $t0, boss_states+10($zero) # store as previous x position
+	sh $t2, boss_states+12($zero) # store as previous y position
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 4 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS
+	li $t1, BOSS_COLOUR
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1808($t0)
+	li $t1, SPIKE_COLOUR
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	
 paint_player:
 	# paint player
 	lh $t0, player_states+0($zero) # x position
@@ -836,7 +1222,15 @@ paint_player:
 	mul $t2, $t2, 256 # y * 4 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
-	li $t1, BODY_COLOUR # body colour
+	# determine body colour
+	lb $t8, player_states+8($zero)
+	bne $t8, 1, is_not_damaged
+	li $t1, SPIKE_COLOUR
+	j is_paint_player_continue
+is_not_damaged:
+	li $t1, BODY_COLOUR
+
+paint_player_continue:
 	# body parts independent of direction
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -859,7 +1253,7 @@ paint_player:
 	li $t1, LASER_COLOUR # goggle colour
 	sw $t1, 264($t0)
 	sw $t1, 268($t0)
-	j game_refresh
+	j paint_laser
 		
 player_facing_left:
 	sw $t1, 0($t0)
@@ -870,8 +1264,87 @@ player_facing_left:
 	li $t1, LASER_COLOUR # goggle colour
 	sw $t1, 256($t0)
 	sw $t1, 260($t0)
-	j game_refresh
+	j paint_laser
 
+paint_laser:
+	# paint laser if velocity is not zero
+	lb $t4, laser+4($zero)
+	beqz $t4, paint_spike
+	lh $t0, laser+0($zero) # x position
+	lh $t2, laser+2($zero) # y position
+	sh $t0, laser+6($zero) # store as previous x position
+	sh $t2, laser+8($zero) # store as previous y position
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 256 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS # laser location in $t0
+	li $t1, LASER_COLOUR
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+
+paint_spike:
+	# paint spike if velocity is not zero
+	lb $t5, spike+4($zero)
+	beqz $t5, paint_hearts
+	lh $t0, spike+0($zero) # x position
+	lh $t2, spike+2($zero) # y position
+	sh $t0, spike+6($zero) # store as previous x position
+	sh $t2, spike+8($zero) # store as previous y position
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 256 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS # spike location in $t0
+	li $t1, SPIKE_COLOUR
+	sw $t1, 0($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+
+paint_hearts:
+	# paint hearts if player is taking damage
+	lb $t8, player_states+8($zero)
+	bne $t8, 1, paint_timer
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 260
+	li $t1, SPIKE_COLOUR
+	lb $t7, player_states+7($zero) # health
+paint_hearts_loop:
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1804($t0)
+	addi $t0, $t0, 32
+	addi $t7, $t7, -1
+	bnez $t7, paint_hearts_loop
+
+paint_timer:
 
 game_refresh:	
 	# frame delay before looping
@@ -882,15 +1355,16 @@ game_refresh:
 
 game_keypressed:
 	lw $t8, 4($t9) 
+	beq $t8, 0x61, a_pressed
+	beq $t8, 0x73, s_pressed
+	beq $t8, 0x64, d_pressed
+	beq $t8, 0x66, f_pressed
+	beq $t8, 0x6a, j_pressed
 	beq $t8, 0x71, q_pressed
-	beq $t8, 0x77, w_pressed
-	beq $t8, 0x65, e_pressed
 	beq $t8, 0x72, r_pressed
-	beq $t8, 0x20, sp_pressed
-	beq $t8, 0x6c, l_pressed
 	j game_update_positions
 
-q_pressed:
+a_pressed:
 	# only left flip if jump state is 1
 	lb $t6, player_states+6($zero)
 	bne $t6, 1, game_update_positions
@@ -905,7 +1379,7 @@ left_flip:
 	sb $t9, player_states+9($zero)
 	j game_update_positions
 
-w_pressed:
+s_pressed:
 	li $t9, 0 # facing left
 	sb $t9, player_states+9($zero)
 	# only move left if jump state is 0
@@ -919,7 +1393,7 @@ move_left:
 	sb $t6, player_states+6($zero)
 	j game_update_positions
 
-e_pressed:
+d_pressed:
 	li $t9, 1 # facing right
 	sb $t9, player_states+9($zero)
 	# only move right if jump state is 0
@@ -933,7 +1407,7 @@ move_right:
 	sb $t6, player_states+6($zero)
 	j game_update_positions
 
-r_pressed:
+f_pressed:
 	# only right flip if jump state is 1
 	lb $t6, player_states+6($zero)
 	bne $t6, 1, game_update_positions
@@ -948,7 +1422,7 @@ right_flip:
 	sb $t9, player_states+9($zero)
 	j game_update_positions
 
-sp_pressed:
+j_pressed:
 	# only jump if jump state is 0 
 	lb $t6, player_states+6($zero)
 	bne $t6, 0, game_update_positions
@@ -961,8 +1435,11 @@ jump:
 	sb $t6, player_states+6($zero)
 	j game_update_positions
 
-l_pressed:
+q_pressed:
 	j end_screen
+
+r_pressed: 
+	j game
 
 end_screen:
 	li $t1, 0xff0000
