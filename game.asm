@@ -42,6 +42,8 @@
 .eqv PLAYER_HEIGHT 5
 .eqv FLOOR_HEIGHT 62
 .eqv BOSS_HEIGHT 8
+.eqv TIMER_LOCATION 432
+.eqv SCORE_LOCATION 460
 .eqv BACKGROUND 0x444444
 .eqv BODY_COLOUR 0xff7700
 .eqv LASER_COLOUR 0x22eecc
@@ -49,10 +51,13 @@
 .eqv DART_COLOUR 0xff0000
 .eqv FLOOR_LIGHT 0xbbbbcc
 .eqv FLOOR_DARK 0x888899
-.eqv SCORE_COLOUR 0xffcccc
+.eqv SCORE_COLOUR 0xffffcc
+.eqv TIMER_COLOUR 0xaa55ff
+.eqv CROWN_COLOUR 0xffdd00
 .eqv LASER_DMG 10
-.eqv DART_DMG 1
+.eqv BOSS_DMG 1
 .eqv MAX_TIME 141
+.eqv INVINCIBILITY_FRAMES 10
 
 # player:
 # 2 bytes: x position
@@ -61,7 +66,7 @@
 # 1 byte: y velocity
 # 1 byte: jump state
 # 1 byte: health points
-# 1 byte: is damaged
+# 1 byte: damaged state 
 # 1 byte: direction
 # 2 bytes: previous x position
 # 2 bytes: previous y position
@@ -130,12 +135,39 @@ init:
 	sh $zero, counters+4($zero)
 
 main_title:
-	# main title display
 	jal reset_screen
+
+	# print crown symbol
 	li $t0, BASE_ADDRESS
-	li $t1, 0x00ff00
+	addi $t0, $t0, TIMER_LOCATION # starting point
+	li $t1, CROWN_COLOUR
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	li $t1, LASER_COLOUR
+	sw $t1, 520($t0)
+		
+	# draw high score
+	sh $t4, counters+4($zero)
+	li $a0, BASE_ADDRESS
+	addi $a0, $a0, SCORE_LOCATION
+	move $a1, $t4
+	jal draw_score
 	
+			
+
 	# title AB-58 
+	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 8192
 	# first letter A
 	addi $t0, $t0, 48
@@ -474,6 +506,177 @@ draw_floor:
 	sw $t1, 508($t0)
 	jr $ra
 
+draw_score:
+	# a0: start location
+	# a1: score value
+	move $a3, $ra # save $ra in $a3
+	move $t0, $a0 # start location into $t0
+	li $t1, 100
+	div $a1, $t1 # divide a1 by 100
+	mflo $t5 # 100's digit in $t5
+	mfhi $a1 # remainder in $a1
+	li $t1, 10
+	div $a1, $t1 # divide a1 by 10
+	mflo $t6 # 10's digit in $t6
+	mfhi $t7 # 1's digit in $t7
+digit_100:
+	jal draw_space # space for digit
+	move $a0, $t5 # print $t5
+	jal draw_digit
+digit_10:
+	addi $t0, $t0, 16 # move to next digit
+	jal draw_space # space for digit
+	move $a0, $t6 # print $t6	
+	jal draw_digit
+digit_1:
+	addi $t0, $t0, 16 # move to next digit
+	jal draw_space # space for digit
+	move $a0, $t7 # print $t7	
+	jal draw_digit
+	jr $a3 # final return address
+
+draw_space:
+	li $t1, BACKGROUND
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+
+draw_digit:
+	li $t1, SCORE_COLOUR
+	beq $a0, 1, draw_1
+	beq $a0, 2, draw_2
+	beq $a0, 3, draw_3
+	beq $a0, 4, draw_4
+	beq $a0, 5, draw_5
+	beq $a0, 6, draw_6
+	beq $a0, 7, draw_7
+	beq $a0, 8, draw_8
+	beq $a0, 9, draw_9
+draw_0:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_1:
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_2:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_3:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_4:
+	sw $t1, 0($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_5:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_6:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_7:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1024($t0)
+	jr $ra
+draw_8:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_9:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	jr $ra
+
 game:
 	# reset screen
 	jal reset_screen
@@ -505,9 +708,37 @@ init_hearts_loop:
 	addi $t2, $t2, -1
 	bnez $t2, init_hearts_loop
 	
+	# print timer symbol
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, TIMER_LOCATION # starting point
+	li $t1, TIMER_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)	
+	sw $t1, 256($t0)
+	sw $t1, 272($t0)	
+	sw $t1, 512($t0)
+	sw $t1, 528($t0)
+	sw $t1, 768($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	li $t1, SCORE_COLOUR
+	sw $t1, 260($t0)
+	sw $t1, 268($t0)	
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)	
+	
 	# initialize timer
 	li $t2, MAX_TIME
 	sh $t2, counters+2($zero)
+	li $a0, BASE_ADDRESS
+	addi $a0, $a0, SCORE_LOCATION
+	move $a1, $t2
+	jal draw_score
 	
 	# initialize player states
 	li $t0, 1
@@ -622,7 +853,7 @@ game_update_positions:
 	# boss action
 	li $v0, 42
 	li $a0, 0
-	li $a1, 10
+	li $a1, 15
 	syscall
 	# only do action if jump state is 0
 	lb $t4, boss+4($zero)
@@ -631,12 +862,16 @@ game_update_positions:
 	bne $t6, 0, boss_update_position	
 	blt $a0, 1, boss_shoot
 	blt $a0, 2, boss_jump
-	blt $a0, 5, boss_move
+	blt $a0, 10, boss_move
 boss_idle:
 	li $t4, 0
 	li $t5, 0
 	j boss_update_position
 boss_shoot:
+	# only shoot dart if player location is above boss
+	lh $t2, boss+2($zero)
+	lh $t8, player+2($zero)
+	blt $t2, $t8, game_update_positions
 	# only shoot dart if dart velocity is zero
 	lb $t5, dart+5($zero)
 	bnez $t5, game_update_positions
@@ -665,7 +900,7 @@ boss_move:
 	li $t5, 0
 	j boss_update_position	
 boss_move_left:
-	li $t4, -1	
+	li $t4, -1
 	li $t5, 0
 boss_update_position:
 	# apply gravity, update boss position
@@ -679,7 +914,6 @@ boss_update_position:
 	sb $t4, boss+4($zero)
 	sb $t5, boss+5($zero)
 	sb $t6, boss+6($zero)
-
 
 	# update dart y position
 	lh $t2, dart+2($zero)
@@ -745,9 +979,10 @@ player_platforms:
 player_platform_1:
 	# check player-platform_1 collision
 	lh $t8, platform_1+2($zero)
-	bgt $t2, $t8, player_platform_2 # check y position
-	addi $t8, $t8, -PLAYER_HEIGHT
-	blt $t2, $t8, player_platform_2 # check foot position
+	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	lh $t9, player+12($zero) # previous y position
+	bgt $t9, $t8, player_platform_2 # check previous y position
+	blt $t2, $t8, player_platform_2 # check new y position
 	lh $t9, platform_1+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_2 # check left edge of platform
@@ -763,9 +998,10 @@ player_platform_1:
 player_platform_2:
 	# check player-platform_2 collision
 	lh $t8, platform_2+2($zero)
-	bgt $t2, $t8, player_platform_3 # check y position
-	addi $t8, $t8, -PLAYER_HEIGHT
-	blt $t2, $t8, player_platform_3 # check foot position
+	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	lh $t9, player+12($zero) # previous y position
+	bgt $t9, $t8, player_platform_3 # check previous y position
+	blt $t2, $t8, player_platform_3 # check new y position
 	lh $t9, platform_2+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_3 # check left edge of platform
@@ -781,9 +1017,10 @@ player_platform_2:
 player_platform_3:
 	# check player-platform_3 collision
 	lh $t8, platform_3+2($zero)
-	bgt $t2, $t8, player_platform_4 # check y position
-	addi $t8, $t8, -PLAYER_HEIGHT
-	blt $t2, $t8, player_platform_4 # check foot position
+	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	lh $t9, player+12($zero) # previous y position
+	bgt $t9, $t8, player_platform_4 # check previous y position
+	blt $t2, $t8, player_platform_4 # check new y position
 	lh $t9, platform_3+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_4 # check left edge of platform
@@ -799,9 +1036,10 @@ player_platform_3:
 player_platform_4:
 	# check player-platform_4 collision
 	lh $t8, platform_4+2($zero)
-	bgt $t2, $t8, player_platform_5 # check y position
-	addi $t8, $t8, -PLAYER_HEIGHT
-	blt $t2, $t8, player_platform_5 # check foot position
+	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	lh $t9, player+12($zero) # previous y position
+	bgt $t9, $t8, player_platform_5 # check previous y position
+	blt $t2, $t8, player_platform_5 # check new y position
 	lh $t9, platform_4+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_5 # check left edge of platform
@@ -817,9 +1055,10 @@ player_platform_4:
 player_platform_5:
 	# check player-platform_5 collision
 	lh $t8, platform_5+2($zero)
-	bgt $t2, $t8, player_slider # check y position
-	addi $t8, $t8, -PLAYER_HEIGHT
-	blt $t2, $t8, player_slider # check foot position
+	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	lh $t9, player+12($zero) # previous y position
+	bgt $t9, $t8, player_slider # check previous y position
+	blt $t2, $t8, player_slider # check new y position
 	lh $t9, platform_5+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_slider # check left edge of platform
@@ -865,6 +1104,9 @@ player_right_wall:
 	sb $zero, player+4($zero)
 
 player_boss:
+	# if player damage state is negative, do not check for collision
+	lb $t8, player+8($zero)
+	bltz $t8, player_dart
 	# check player-boss collision
 	lh $t8, boss+0($zero) # boss x position
 	addi $t8, $t8, -3
@@ -886,7 +1128,7 @@ knockback_right:
 finish_knockback:
 	li $t5, -3 # upwards knockback	
 	li $t6, 2 # cannot jump or double jump
-	addi $t7, $t7, -1 # lose one life
+	addi $t7, $t7, -BOSS_DMG # lose health
 	li $t8, 1
 	sb $t4, player+4($zero)
 	sb $t5, player+5($zero)	
@@ -905,8 +1147,11 @@ player_dart:
 	blt $t2, $t9, dart_borders # check upper y bound
 	addi $t9, $t9, 6	
 	bgt $t2, $t9, dart_borders # check lower y bound
+	# if player damage state is negative, only stop dart
+	lb $t8, player+8($zero)
+	bltz $t8, stop_dart
 	# update player states accordingly
-	addi $t7, $t7, -DART_DMG # lose health
+	addi $t7, $t7, -BOSS_DMG # lose health
 	li $t8, 1
 	sb $t7, player+7($zero)
 	sb $t8, player+8($zero)
@@ -1055,9 +1300,10 @@ erase_player:
 	sw $t1, 1036($t0)
 
 erase_laser:
-	# erase laser
+	# erase laser if in playable range
 	lh $t0, laser+6($zero) # previous x position	
 	lh $t2, laser+8($zero) # previous y position
+	blt $t2, 6, erase_boss
 	li $t1, BACKGROUND
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 256 into $t2
@@ -1140,9 +1386,10 @@ erase_boss:
 	sw $t1, 1816($t0)
 
 erase_dart:
-	# erase dart
+	# erase dart if in playable range
 	lh $t0, dart+6($zero) # previous x position	
 	lh $t2, dart+8($zero) # previous y position
+	blt $t2, 6, erase_slider
 	li $t1, BACKGROUND
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 256 into $t2
@@ -1439,7 +1686,6 @@ paint_player:
 	j paint_player_continue
 player_not_damaged:
 	li $t1, BODY_COLOUR
-
 paint_player_continue:
 	# body parts independent of direction
 	sw $t1, 4($t0)
@@ -1510,9 +1756,11 @@ paint_dart:
 	sw $t1, 512($t0)
 
 paint_hearts:
-	# paint hearts if player is taking damage
-	lb $t8, player+8($zero)
-	bne $t8, 1, paint_timer
+	lb $t8, player+8($zero) # player damage state
+	# if player damage state is negative, do not print hearts
+	bltz $t8, invincibility_decay
+	# if player damage state is not 1, do not reprint hearts
+	bne $t8, 1, game_refresh
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260 # starting point
 	lb $t7, player+7($zero) # player health
@@ -1557,10 +1805,13 @@ paint_hearts_loop:
 	sw $t1, 776($t0)
 	sw $t1, 780($t0)
 	sw $t1, 1032($t0)
-	# player not taking damage anymore
-	sb $zero, player+8($zero)
-
-paint_timer:
+invincible:
+	li $t8, -INVINCIBILITY_FRAMES
+	sb $t8, player+8($zero)
+	j game_refresh
+invincibility_decay:
+	addi $t8, $t8, 1
+	sb $t8, player+8($zero)
 
 game_refresh:
 	# increment frame counter
@@ -1575,7 +1826,12 @@ second_elasped:
 	addi $t2, $t2, -1
 	beqz $t2, end_screen
 	sh $zero, counters+0($zero)
-	sh $2, counters+2($zero)
+	sh $t2, counters+2($zero)
+paint_time:
+	li $a0, BASE_ADDRESS
+	addi $a0, $a0, SCORE_LOCATION
+	move $a1, $t2
+	jal draw_score
 frame_delay:
 	# frame delay before looping
 	li $v0, 32
@@ -1696,11 +1952,430 @@ r_pressed:
 
 end_screen:
 	jal reset_screen
+	
+	# check if player won/lost/quit
+	lb $t0, player+7($zero)
+	beqz $t0, defeat
+	lb $t1, boss+7($zero)
+	blez $t1, victory
+quit:
 
-	li $t1, 0xff0000
-	sw $t1, 0($t0)
+defeat:
+	# draw timer
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, TIMER_LOCATION # starting point
+	li $t1, TIMER_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)	
 	sw $t1, 256($t0)
+	sw $t1, 272($t0)	
+	sw $t1, 512($t0)
+	sw $t1, 528($t0)
+	sw $t1, 768($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	li $t1, SCORE_COLOUR
+	sw $t1, 260($t0)
+	sw $t1, 268($t0)	
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)	
+	# draw remaining time
+	lh $t2, counters+2($zero)
+	li $a0, BASE_ADDRESS
+	addi $a0, $a0, SCORE_LOCATION
+	move $a1, $t2
+	jal draw_score
 
+	# "YOU DIED"
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 4108
+	li $t1, DART_COLOUR
+	# Y
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	# O
+	addi $t0, $t0, 32
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	# U
+	addi $t0, $t0, 32
+	sw $t1, 0($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	# space
+	addi $t0, $t0, 12
+	# D
+	addi $t0, $t0, 32
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	# I
+	addi $t0, $t0, 32
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	# E
+	addi $t0, $t0, 32
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+	# D
+	addi $t0, $t0, 32
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	
+	j BYEBYE
+
+
+
+
+
+victory:
+	# "YOU WON"
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 4108
+	li $t1, DART_COLOUR
+	# Y
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	# O
+	addi $t0, $t0, 32
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	# U
+	addi $t0, $t0, 32
+	sw $t1, 0($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	# space
+	addi $t0, $t0, 12
+
+
+BYEBYE:
 	li $v0, 10 
 	syscall
 
