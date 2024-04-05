@@ -49,6 +49,8 @@
 .eqv FLOOR_LIGHT 0xbbbbcc
 .eqv FLOOR_DARK 0x888899
 .eqv SCORE_COLOUR 0xffcccc
+.eqv LASER_DMG 2
+.eqv DART_DMG 1
 
 # player:
 # 2 bytes: x position
@@ -57,7 +59,7 @@
 # 1 byte: y velocity
 # 1 byte: jump state
 # 1 byte: health points
-# 1 byte: damaged state
+# 1 byte: is damaged
 # 1 byte: direction
 # 2 bytes: previous x position
 # 2 bytes: previous y position
@@ -79,8 +81,8 @@ laser: .space 10
 # 1 byte: y velocity
 # 1 byte: jump state
 # 1 byte: health points
-# 1 byte: damaged state
-# 1 byte: shooting
+# 1 byte: is damaged
+# 1 byte: is shooting
 # 2 bytes: previous x position
 # 2 bytes: previous y position
 boss: .space 14
@@ -325,7 +327,7 @@ reset_screen_loop:
 	addi $t2, $t2, 4
 	bne $t2, 16380, reset_screen_loop
 draw_floor:
-	# draw floor
+	# draw floor as part of the reset
 	li $t0, BASE_ADDRESS
 	li $t1, FLOOR_HEIGHT
 	mul $t1, $t1, 256
@@ -463,6 +465,7 @@ draw_floor:
 	jr $ra
 
 game:
+	# reset screen
 	jal reset_screen
 		
 	# print hearts
@@ -509,21 +512,19 @@ init_hearts_loop:
 	sh $t2, player+12($zero)
 	
 	# initialize laser states
-	li $t0, 50
-	li $t2, 0
-	li $t4, 0
-	li $t5, 0
+	li $t0, 55
+	li $t2, 1
 	sh $t0, laser+0($zero)
 	sh $t2, laser+2($zero)
-	sb $t4, laser+4($zero)	
-	sb $t5, laser+5($zero)	
+	sb $zero, laser+4($zero)	
+	sb $zero, laser+5($zero)	
 	sh $t0, laser+6($zero)
 	sh $t2, laser+8($zero)
 	
 	# initialize boss states
 	li $t0, 56
 	li $t2, 54
-	li $t7, 100
+	li $t7, 58
 	li $t9, 0
 	sh $t0, boss+0($zero)
 	sh $t2, boss+2($zero)
@@ -538,13 +539,11 @@ init_hearts_loop:
 	
 	# initialize dart states
 	li $t0, 60
-	li $t2, 0
-	li $t4, 0
-	li $t5, 0
+	li $t2, 1
 	sh $t0, dart+0($zero)
 	sh $t2, dart+2($zero)
-	sb $t4, dart+4($zero)	
-	sb $t5, dart+5($zero)	
+	sb $zero, dart+4($zero)	
+	sb $zero, dart+5($zero)	
 	sh $t0, dart+6($zero)
 	sh $t2, dart+8($zero)
 			
@@ -585,7 +584,6 @@ init_hearts_loop:
 	sb $t5, slider+5($zero)	
 	sh $t0, slider+6($zero)
 	sh $t2, slider+8($zero)
-	
 
 game_check_keypress:
 	li $t9, 0xffff0000
@@ -619,7 +617,6 @@ game_update_positions:
 	add $t2, $t2, $t5
 	sh $t2, dart+2($zero)
 
-	
 	# update slider position then velocity
 	lh $t0, slider+0($zero)
 	lh $t2, slider+2($zero)
@@ -629,13 +626,22 @@ game_update_positions:
 	add $t2, $t2, $t5
 	sh $t0, slider+0($zero)
 	sh $t2, slider+2($zero)
-	blt $t0, 13, turn_slider
-	blt $t0, 27, game_check_collisions
-turn_slider: 
+	blt $t0, 13, slider_180
+	beq $t0, 24, slider_turn
+	blt $t0, 38, game_check_collisions
+slider_180: 
 	mul $t4, $t4, -1
-	mul $t5, $t5, -1	
+	mul $t5, $t5, -1
 	sb $t4, slider+4($zero)
 	sb $t5, slider+5($zero)
+	j game_check_collisions
+slider_turn:
+	beqz $t5, slider_down
+	sb $zero, slider+5($zero)
+	j game_check_collisions
+slider_down:
+	li $t5, 1
+	sb $t5, slider+5($zero)	
 	
 	
 game_check_collisions:
@@ -791,22 +797,22 @@ player_right_wall:
 player_boss:
 	# check player-boss collision
 	lh $t8, boss+0($zero) # boss x position
-	addi $t8, $t8, -4
+	addi $t8, $t8, -3
 	blt $t0, $t8, player_dart # check left x bound
-	addi $t8, $t8, 11	
+	addi $t8, $t8, 9	
 	bgt $t0, $t8, player_dart # check right x bound	
 	lh $t9, boss+2($zero) # boss y position
-	addi $t9, $t9, -5
-	blt $t0, $t9, player_dart # check upper y bound
-	addi $t9, $t9, 13	
-	bgt $t0, $t9, player_dart # check lower x bound
+	addi $t9, $t9, -4
+	blt $t2, $t9, player_dart # check upper y bound
+	addi $t9, $t9, 11	
+	bgt $t2, $t9, player_dart # check lower y bound
 	# update player states accordingly
 	lb $t9, player+9($zero) # get player direction to calculate knockback
 	beqz $t9, knockback_right
-	li $t4, -2
+	li $t4, -3
 	j finish_knockback
 knockback_right:
-	li $t4, 2
+	li $t4, 3
 finish_knockback:
 	li $t5, -3 # upwards knockback	
 	li $t6, 2 # cannot jump or double jump
@@ -821,21 +827,38 @@ finish_knockback:
 player_dart:
 	# check player-dart collision
 	lh $t8, dart+0($zero) # dart x position
-	blt $t0, $t8, boss_collisions # check left x bound
-	addi $t8, $t8, 3
-	bgt $t0, $t8,  boss_collisions # check right x bound	
+	bgt $t0, $t8, dart_borders # check right x bound	
+	addi $t8, $t8, -3
+	blt $t0, $t8, dart_borders # check left x bound
 	lh $t9, dart+2($zero) # dart y position
 	addi $t9, $t9, -4
-	blt $t0, $t9, boss_collisions # check upper y bound
+	blt $t2, $t9, dart_borders # check upper y bound
 	addi $t9, $t9, 6	
-	bgt $t0, $t9, boss_collisions # check lower x bound
+	bgt $t2, $t9, dart_borders # check lower y bound
 	# update player states accordingly
-	addi $t7, $t7, -1 # lose one life
+	addi $t7, $t7, -DART_DMG # lose health
 	li $t8, 1
 	sb $t7, player+7($zero)
-	sb $t8, player+8($zero)	
+	sb $t8, player+8($zero)
+	j stop_dart
 	
-
+dart_borders:
+	# get dart states
+	lh $t0, dart+0($zero) # x position
+	lh $t2, dart+2($zero) # y position
+	# check dart is within borders
+	blt $t2, 6, stop_dart # top border
+	blt $t0, 0, stop_dart # left border
+	bgt $t0, 62, stop_dart # right border
+	j boss_collisions
+stop_dart:
+	li $t0, 55
+	li $t2, 1
+	sh $t0, dart+0($zero)
+	sh $t2, dart+2($zero)
+	sb $zero, dart+4($zero)
+	sb $zero, dart+5($zero)
+	
 boss_collisions:
 	# get boss states
 	lh $t0, boss+0($zero) # x position
@@ -872,8 +895,8 @@ boss_platform_1:
 	blt $t0, $t9, boss_left_wall # check left edge of platform
 	addi $t9, $t9, 11
 	bgt $t0, $t9, boss_left_wall # check right edge of platform
-	# update player states accordingly
-	sh $t8, boss+2($zero)	
+	# update boss states accordingly
+	sh $t8, boss+2($zero)
 	sb $zero, boss+4($zero)
 	sb $zero, boss+5($zero)
 	sb $zero, boss+6($zero)
@@ -886,15 +909,50 @@ boss_left_wall:
 
 boss_right_wall:
 	# check boss-right_wall collision
-	blt $t0, 60, game_update_screen
+	blt $t0, 60, boss_laser
 	li $t0, 60
-	sh $t0, player+0($zero)
-	sb $zero, player+4($zero)
+	sh $t0, boss+0($zero)
+	sb $zero, boss+4($zero)
 
+boss_laser:
+	# check boss-laser collision
+	lh $t8, laser+0($zero) # dart x position
+	addi $t8, $t8, -6
+	blt $t0, $t8, laser_borders # check left x bound
+	addi $t8, $t8, 7	
+	bgt $t0, $t8, laser_borders # check right x bound		
+	lh $t9, laser+2($zero) # dart y position
+	bgt $t2, $t9, laser_borders # check lower y bound
+	addi $t9, $t9, -7	
+	blt $t2, $t9, laser_borders # check upper y bound
+	# update boss states accordingly
+	lb $t7, boss+7($zero)
+	addi $t7, $t7, -LASER_DMG # lose health
+	blez $t7, end_screen
+	li $t8, 1
+	sb $t7, boss+7($zero)
+	sb $t8, boss+8($zero)	
+	# stop laser 
+	j stop_laser
 
+laser_borders:
+	# get laser states
+	lh $t0, laser+0($zero) # x position
+	lh $t2, laser+2($zero) # y position
+	# check laser is within borders
+	blt $t2, 6, stop_laser # top border
+	blt $t0, 0, stop_laser # left border
+	bgt $t0, 62, stop_laser # right border
+	j game_update_screen
+stop_laser:
+	li $t0, 55
+	li $t2, 1
+	sh $t0, laser+0($zero)
+	sh $t2, laser+2($zero)
+	sb $zero, laser+4($zero)
+	sb $zero, laser+5($zero)
 
 game_update_screen:
-	#sw $t1, 16380($t0)
 
 erase_player:
 	# erase player
@@ -902,9 +960,9 @@ erase_player:
 	lh $t2, player+12($zero) # previous y position
 	li $t1, BACKGROUND # background colour
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
-	addi $t0, $t0, BASE_ADDRESS
+	addi $t0, $t0, BASE_ADDRESS # player location in $t0
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -932,7 +990,7 @@ erase_laser:
 	lh $t2, laser+8($zero) # previous y position
 	li $t1, BACKGROUND
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS # laser location in $t0
 	sw $t1, 0($t0)
@@ -944,7 +1002,7 @@ erase_boss:
 	lh $t2, boss+12($zero) # previous y position
 	li $t1, BACKGROUND # background colour
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	sw $t1, 0($t0)
@@ -1017,7 +1075,7 @@ erase_dart:
 	lh $t2, dart+8($zero) # previous y position
 	li $t1, BACKGROUND
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS # dart location in $t0
 	sw $t1, 0($t0)
@@ -1030,7 +1088,7 @@ erase_slider:
 	lh $t2, slider+8($zero) # previous y position
 	li $t1, BACKGROUND
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS # slider location in $t0
 	sw $t1, 0($t0)
@@ -1060,7 +1118,7 @@ paint_platforms:
 	lh $t2, platform_1+2($zero) # y position
 	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	sw $t1, 0($t0)
@@ -1090,7 +1148,7 @@ paint_platforms:
 	lh $t2, platform_2+2($zero) # y position
 	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	sw $t1, 0($t0)
@@ -1120,7 +1178,7 @@ paint_platforms:
 	lh $t2, platform_3+2($zero) # y position
 	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	sw $t1, 0($t0)
@@ -1150,7 +1208,7 @@ paint_platforms:
 	lh $t2, platform_4+2($zero) # y position
 	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	sw $t1, 0($t0)
@@ -1180,7 +1238,7 @@ paint_platforms:
 	lh $t2, platform_5+2($zero) # y position
 	li $t1, FLOOR_LIGHT
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	sw $t1, 0($t0)
@@ -1212,7 +1270,7 @@ paint_slider:
 	sh $t0, slider+6($zero) # store as previous x position
 	sh $t2, slider+8($zero) # store as previous y position
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS # slider location in $t0
 	li $t1, FLOOR_LIGHT
@@ -1245,10 +1303,18 @@ paint_boss:
 	sh $t0, boss+10($zero) # store as previous x position
 	sh $t2, boss+12($zero) # store as previous y position
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
+	# determine body colour
+	lb $t8, boss+8($zero)
+	bne $t8, 1, boss_not_damaged
+	sb $zero, boss+8($zero) # not damaged for next iteration
+	li $t1, LASER_COLOUR
+	j paint_boss_continue
+boss_not_damaged:
 	li $t1, BOSS_COLOUR
+paint_boss_continue:	
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 20($t0)
@@ -1293,15 +1359,15 @@ paint_player:
 	sh $t0, player+10($zero) # store as previous x position
 	sh $t2, player+12($zero) # store as previous y position
 	mul $t0, $t0, 4 # x * 4 into $t0
-	mul $t2, $t2, 256 # y * 4 into $t2
+	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	# determine body colour
 	lb $t8, player+8($zero)
-	bne $t8, 1, is_not_damaged
+	bne $t8, 1, player_not_damaged
 	li $t1, SPIKE_COLOUR
 	j paint_player_continue
-is_not_damaged:
+player_not_damaged:
 	li $t1, BODY_COLOUR
 
 paint_player_continue:
@@ -1421,8 +1487,8 @@ paint_hearts_loop:
 	sw $t1, 776($t0)
 	sw $t1, 780($t0)
 	sw $t1, 1032($t0)
-	# player not taking damage
-	sb $zero, player+8($zero)	
+	# player not taking damage anymore
+	sb $zero, player+8($zero)
 
 paint_timer:
 
@@ -1525,7 +1591,7 @@ l_pressed:
 	# decide whether to shoot left or right
 	lb $t9, player+9($zero)
 	beqz $t9, shoot_laser_left
-	li $t4, -2
+	li $t4, 2
 	addi $t0, $t0, 2
 	addi $t2, $t2, 1 
 	j finish_shooting_laser
