@@ -37,6 +37,7 @@
 .data
 .eqv BASE_ADDRESS 0x10008000
 .eqv FRAME_DELAY 50
+.eqv FPS 20
 .eqv GRAVITY 1
 .eqv PLAYER_HEIGHT 5
 .eqv FLOOR_HEIGHT 62
@@ -45,12 +46,13 @@
 .eqv BODY_COLOUR 0xff7700
 .eqv LASER_COLOUR 0x22eecc
 .eqv BOSS_COLOUR 0x22cc44
-.eqv SPIKE_COLOUR 0xff0000
+.eqv DART_COLOUR 0xff0000
 .eqv FLOOR_LIGHT 0xbbbbcc
 .eqv FLOOR_DARK 0x888899
 .eqv SCORE_COLOUR 0xffcccc
-.eqv LASER_DMG 2
+.eqv LASER_DMG 10
 .eqv DART_DMG 1
+.eqv MAX_TIME 141
 
 # player:
 # 2 bytes: x position
@@ -114,9 +116,18 @@ platform_5: .space 4
 # 2 bytes: previous y position
 slider: .space 10
 
+# counters:
+# 2 bytes: frame counter
+# 2 bytes: seconds remaining
+# 2 bytes: high score
+counters: .space 6
 
-.globl main_title
+.globl init
 .text
+
+init:
+	# initialize high score to zero
+	sh $zero, counters+4($zero)
 
 main_title:
 	# main title display
@@ -461,13 +472,12 @@ draw_floor:
 	sw $t1, 500($t0)
 	sw $t1, 504($t0)
 	sw $t1, 508($t0)
-	
 	jr $ra
 
 game:
 	# reset screen
 	jal reset_screen
-		
+
 	# print hearts
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260 # starting point
@@ -475,7 +485,7 @@ game:
 init_hearts_loop:
 	li $t1, SCORE_COLOUR
 	sw $t1, 268($t0)
-	li $t1, SPIKE_COLOUR	
+	li $t1, DART_COLOUR	
 	sw $t1, 4($t0)
 	sw $t1, 12($t0)
 	sw $t1, 256($t0)
@@ -494,6 +504,10 @@ init_hearts_loop:
 	addi $t0, $t0, 24
 	addi $t2, $t2, -1
 	bnez $t2, init_hearts_loop
+	
+	# initialize timer
+	li $t2, MAX_TIME
+	sh $t2, counters+2($zero)
 	
 	# initialize player states
 	li $t0, 1
@@ -552,22 +566,18 @@ init_hearts_loop:
 	li $t2, 55
 	sh $t0, platform_1+0($zero)
 	sh $t2, platform_1+2($zero)
-
 	li $t0, 40
 	li $t2, 44
 	sh $t0, platform_2+0($zero)
 	sh $t2, platform_2+2($zero)
-
 	li $t0, 53
 	li $t2, 33
 	sh $t0, platform_3+0($zero)
 	sh $t2, platform_3+2($zero)
-
 	li $t0, 8
 	li $t2, 44
 	sh $t0, platform_4+0($zero)
 	sh $t2, platform_4+2($zero)
-
 	li $t0, 0
 	li $t2, 26
 	sh $t0, platform_5+0($zero)
@@ -609,7 +619,67 @@ game_update_positions:
 	add $t0, $t0, $t4
 	sh $t0, laser+0($zero)
 
-	# choose velocity for boss depending on jump state
+	# boss action
+	li $v0, 42
+	li $a0, 0
+	li $a1, 10
+	syscall
+	# only do action if jump state is 0
+	lb $t4, boss+4($zero)
+	lb $t5, boss+5($zero)
+	lb $t6, boss+6($zero)	
+	bne $t6, 0, boss_update_position	
+	blt $a0, 1, boss_shoot
+	blt $a0, 2, boss_jump
+	blt $a0, 5, boss_move
+boss_idle:
+	li $t4, 0
+	li $t5, 0
+	j boss_update_position
+boss_shoot:
+	# only shoot dart if dart velocity is zero
+	lb $t5, dart+5($zero)
+	bnez $t5, game_update_positions
+	lh $t0, boss+0($zero) # boss x position
+	lh $t2, boss+2($zero) # boss y position
+	li $t5, -3 # dart velocity
+	addi $t0, $t0, 3
+	addi $t2, $t2, -1
+	sh $t0, dart+0($zero) # store new dart x position
+	sh $t2, dart+2($zero) # store new dart y position
+	sb $t5, dart+5($zero) # store new dart y velocity	
+	li $t4, 0 # boss stands still
+	li $t5, 0 # boss stands still
+	j boss_update_position
+boss_jump:
+	li $t4, 0
+	li $t5, -3
+	li $t6, 1
+	j boss_update_position
+boss_move:
+	# get player previous x position
+	lh $t0, boss+0($zero)
+	lh $t8, player+10($zero)
+	bgt $t0, $t8, boss_move_left
+	li $t4, 1
+	li $t5, 0
+	j boss_update_position	
+boss_move_left:
+	li $t4, -1	
+	li $t5, 0
+boss_update_position:
+	# apply gravity, update boss position
+	lh $t0, boss+0($zero)
+	lh $t2, boss+2($zero)
+	addi $t5, $t5, GRAVITY
+	add $t0, $t0, $t4
+	add $t2, $t2, $t5
+	sh $t0, boss+0($zero)
+	sh $t2, boss+2($zero)
+	sb $t4, boss+4($zero)
+	sb $t5, boss+5($zero)
+	sb $t6, boss+6($zero)
+
 
 	# update dart y position
 	lh $t2, dart+2($zero)
@@ -909,8 +979,8 @@ boss_left_wall:
 
 boss_right_wall:
 	# check boss-right_wall collision
-	blt $t0, 60, boss_laser
-	li $t0, 60
+	blt $t0, 57, boss_laser
+	li $t0, 57
 	sh $t0, boss+0($zero)
 	sb $zero, boss+4($zero)
 
@@ -1347,7 +1417,7 @@ paint_boss_continue:
 	sw $t1, 1560($t0)
 	sw $t1, 1800($t0)
 	sw $t1, 1808($t0)
-	li $t1, SPIKE_COLOUR
+	li $t1, DART_COLOUR
 	sw $t1, 1032($t0)
 	sw $t1, 1036($t0)
 	sw $t1, 1040($t0)
@@ -1365,7 +1435,7 @@ paint_player:
 	# determine body colour
 	lb $t8, player+8($zero)
 	bne $t8, 1, player_not_damaged
-	li $t1, SPIKE_COLOUR
+	li $t1, DART_COLOUR
 	j paint_player_continue
 player_not_damaged:
 	li $t1, BODY_COLOUR
@@ -1424,7 +1494,7 @@ paint_laser:
 
 paint_dart:
 	# paint dart if velocity is not zero
-	lb $t5, dart+4($zero)
+	lb $t5, dart+5($zero)
 	beqz $t5, paint_hearts
 	lh $t0, dart+0($zero) # x position
 	lh $t2, dart+2($zero) # y position
@@ -1434,7 +1504,7 @@ paint_dart:
 	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS # dart location in $t0
-	li $t1, SPIKE_COLOUR
+	li $t1, DART_COLOUR
 	sw $t1, 0($t0)
 	sw $t1, 256($t0)
 	sw $t1, 512($t0)
@@ -1445,12 +1515,12 @@ paint_hearts:
 	bne $t8, 1, paint_timer
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260 # starting point
-	lb $t7, player+7($zero) # health
+	lb $t7, player+7($zero) # player health
 	beqz $t7, end_screen
 paint_hearts_loop:
 	li $t1, SCORE_COLOUR
 	sw $t1, 268($t0)
-	li $t1, SPIKE_COLOUR	
+	li $t1, DART_COLOUR	
 	sw $t1, 4($t0)
 	sw $t1, 12($t0)
 	sw $t1, 256($t0)
@@ -1492,7 +1562,21 @@ paint_hearts_loop:
 
 paint_timer:
 
-game_refresh:	
+game_refresh:
+	# increment frame counter
+	lh $t0, counters+0($zero)
+	addi $t0, $t0, 1
+	# check if FPS is reached
+	beq $t0, FPS, second_elasped
+	sh $t0, counters+0($zero)
+	j frame_delay
+second_elasped:
+	lh $t2, counters+2($zero)	
+	addi $t2, $t2, -1
+	beqz $t2, end_screen
+	sh $zero, counters+0($zero)
+	sh $2, counters+2($zero)
+frame_delay:
 	# frame delay before looping
 	li $v0, 32
 	li $a0, FRAME_DELAY
@@ -1596,7 +1680,7 @@ l_pressed:
 	addi $t2, $t2, 1 
 	j finish_shooting_laser
 shoot_laser_left:
-	li $t4, -2	
+	li $t4, -2
 	addi $t2, $t2, 1 
 finish_shooting_laser:
 	sh $t0, laser+0($zero) # store new laser x position
