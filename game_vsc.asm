@@ -146,10 +146,9 @@ main_title:
 	addi $t0, $t0, TIMER_LOCATION # starting point
 	jal draw_crown
 	# draw high score
-	sh $t4, counters+4($zero)
 	li $a0, BASE_ADDRESS
 	addi $a0, $a0, SCORE_LOCATION
-	move $a1, $t4
+	lh $a1, counters+4($zero) # high score
 	jal draw_score
 	# title "ALIEN"
 	li $t0, BASE_ADDRESS
@@ -184,30 +183,64 @@ main_title:
 	# fifth char 8
 	addi $t0, $t0, 32
 	jal big_8
+	# draw controls (A/S/D/F J/L)
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 9760
+	jal double_left
+	jal draw_keycap
+	jal small_A
+	addi $t0, $t0, 32
+	jal single_left
+	jal draw_keycap
+	jal small_S
+	addi $t0, $t0, 32
+	jal single_right
+	jal draw_keycap
+	jal small_D
+	addi $t0, $t0, 32
+	jal double_right
+	jal draw_keycap
+	jal small_F
+	addi $t0, $t0, 32
+	addi $t0, $t0, 16 # space
+	jal jump
+	jal draw_keycap
+	jal small_J
+	addi $t0, $t0, 32
+	jal target
+	jal draw_keycap
+	jal small_L
 	# initialize player and laser for main screen
 	jal init_playser
-	li $t0, 13
-	li $t2, 23
+	li $t0, 31
+	li $t2, 44
 	li $t6, 2
 	sh $t0, player+0($zero)
 	sh $t2, player+2($zero)
 	sb $t6, player+6($zero)
-	# draw "<-" 
-	# draw "->"
 main_title_loop:
 	# check for input
 	jal check_keypress
     # update positions
     jal update_playser
-	# check for playser boundaries
-    jal player_borders
-	jal laser_borders
 	# exit/start game if player reaches left/right border
 	lh $t0, player+0($zero)
 	blt $t0, 0, BYEBYE
 	bgt $t0, 60, game_init
+	# check for playser boundaries
+    jal player_borders
+	jal laser_borders
     # update main title screen
     jal erase_playser
+	# draw exit sign
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 13060
+	jal door
+	jal exit_arrow
+	addi $t0, $t0, 220
+	jal door
+	jal enter_arrow
+	# draw enter sign
     jal paint_playser
 	# frame delay
 	jal frame_delay
@@ -393,7 +426,7 @@ boss_action:
 	# boss action
 	li $v0, 42
 	li $a0, 0
-	li $a1, 16
+	li $a1, 32
 	syscall
 	# only do action if jump state is 0
 	lb $t4, boss+4($zero)
@@ -402,7 +435,8 @@ boss_action:
 	bne $t6, 0, boss_update_position	
 	blt $a0, 1, boss_shoot
 	blt $a0, 2, boss_jump
-	blt $a0, 4, boss_move
+	blt $a0, 4, boss_dash
+	blt $a0, 16, boss_move
 boss_idle:
 	li $t4, 0
 	li $t5, 0
@@ -431,6 +465,17 @@ boss_jump:
 	li $t5, -3
 	li $t6, 1
 	j boss_update_position
+boss_dash:
+	# dash away from player x position
+	lh $t0, boss+0($zero)
+	lh $t8, player+0($zero)
+	bgt $t0, $t8, boss_dash_right
+	li $t4, -4
+	li $t5, 0
+	j boss_update_position	
+boss_dash_right:
+	li $t4, 4
+	li $t5, 0
 boss_move:
 	# move to player previous x position
 	lh $t0, boss+0($zero)
@@ -680,12 +725,11 @@ finish_knockback:
 	li $t5, -3 # upwards knockback	
 	li $t6, 2 # cannot jump or double jump
 	addi $t7, $t7, -BOSS_DMG # lose health
-	li $t8, 1
 	sb $t4, player+4($zero)
 	sb $t5, player+5($zero)	
 	sb $t6, player+6($zero)
 	sb $t7, player+7($zero)
-	sb $t8, player+8($zero)
+	jal invincibility_apply
 player_walls: # need to check walls again because knockback
     jal player_check_left
 player_dart:
@@ -704,9 +748,8 @@ player_dart:
 	bltz $t8, stop_dart
 	# update player states accordingly
 	addi $t7, $t7, -BOSS_DMG # lose health
-	li $t8, 1
 	sb $t7, player+7($zero)
-	sb $t8, player+8($zero)
+	jal invincibility_apply
 	j stop_dart
 dart_borders:
 	# get dart states
@@ -1075,10 +1118,11 @@ paint_dart:
 	sw $t1, 512($t0)
 paint_hearts:
 	lb $t8, player+8($zero) # player damage state
-	# if player damage state is negative, do not print hearts
-	bltz $t8, invincibility_decay
-	# if player damage state is not 1, do not reprint hearts
-	bne $t8, 1, game_update_screen_return
+	# only print hearts if damage state = -invincibility frames
+	li $t9, -INVINCIBILITY_FRAMES
+	bne $t8, $t9, invincibility_decay
+	# do not reprint hearts unless damage state = -invincibility frames
+	bne $t8, $t9, game_update_screen_return
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260 # starting point
 	lb $t7, player+7($zero) # player health
@@ -1123,17 +1167,19 @@ paint_hearts_loop:
 	sw $t1, 776($t0)
 	sw $t1, 780($t0)
 	sw $t1, 1032($t0)
-invincibility_apply:
-	li $t8, -INVINCIBILITY_FRAMES
-	sb $t8, player+8($zero)
-	j game_update_screen_return
 invincibility_decay:
 	addi $t8, $t8, 1
+	# only set value if not positive
+	bgtz $t8, game_update_screen_return
 	sb $t8, player+8($zero)
 game_update_screen_return:
     lw $ra, retadd($zero)
 	jr $ra
-
+# Applies invincibility frames to the player
+invincibility_apply:
+	li $t8, -INVINCIBILITY_FRAMES
+	sb $t8, player+8($zero)
+	jr $ra
 # Paints a platform at ($a0, $a2)
 paint_platform:
 	li $t1, FLOOR_LIGHT
@@ -1177,7 +1223,8 @@ paint_playser:
 	addi $t0, $t0, BASE_ADDRESS
 	# determine body colour
 	lb $t8, player+8($zero)
-	bne $t8, 1, player_not_damaged
+	li $t9, -INVINCIBILITY_FRAMES
+	beqz $t8, player_not_damaged
 	li $t1, DART_COLOUR
 	j paint_player_continue
 player_not_damaged:
@@ -1432,9 +1479,9 @@ victory:
 	# remaining time is high score?
 	lh $t2, counters+2($zero)
 	lh $t4, counters+4($zero)
-	bgt $t2, $t4, high_score
+	bgt $t2, $t4, new_high_score
 	j draw_success
-high_score:
+new_high_score:
 	sh $t2, counters+4($zero)
 draw_success:
 	# draw "SUCCESS"
@@ -1557,13 +1604,370 @@ end_screen_keypressed:
 end_screen_frame_delay:
 	jal frame_delay
 	j end_screen_loop
-
-
-
-
-
-
-
+# lots of drawing functions	from here on
+door:
+	li $t1, FLOOR_DARK
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 280($t0)
+	sw $t1, 536($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+	li $t1, SCORE_COLOUR
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	jr $ra
+enter_arrow:
+	li $t1, BOSS_COLOUR
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	jr $ra
+exit_arrow:
+	li $t1, DART_COLOUR
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	jr $ra
+double_left:
+	addi $t0, $t0, -1796
+	li $t1, SCORE_COLOUR
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	li $t1, FLOOR_LIGHT
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	li $t1, FLOOR_DARK
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1032($t0)
+	addi $t0, $t0, 1796
+	jr $ra
+single_left:
+	addi $t0, $t0, -1792
+	li $t1, BODY_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 0($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	li $t1, LASER_COLOUR
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	addi $t0, $t0, 1792
+	jr $ra
+single_right:
+	addi $t0, $t0, -1796
+	li $t1, BODY_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 12($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1036($t0)
+	li $t1, LASER_COLOUR
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	addi $t0, $t0, 1796
+	jr $ra
+double_right:
+	addi $t0, $t0, -1796
+	li $t1, SCORE_COLOUR
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 272($t0)
+	sw $t1, 528($t0)
+	li $t1, FLOOR_LIGHT
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 524($t0)
+	sw $t1, 780($t0)
+	li $t1, FLOOR_DARK
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1032($t0)
+	addi $t0, $t0, 1796
+	jr $ra
+jump:
+	addi $t0, $t0, -1796
+	li $t1, SCORE_COLOUR
+	sw $t1, 8($t0)
+	sw $t1, 260($t0)
+	sw $t1, 268($t0)
+	sw $t1, 512($t0)
+	sw $t1, 528($t0)
+	li $t1, FLOOR_LIGHT
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 524($t0)
+	sw $t1, 768($t0)
+	sw $t1, 784($t0)
+	li $t1, FLOOR_DARK
+	sw $t1, 520($t0)
+	sw $t1, 772($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1040($t0)
+	addi $t0, $t0, 1796
+	jr $ra
+target:
+	addi $t0, $t0, -1796
+	li $t1, LASER_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 256($t0)
+	sw $t1, 272($t0)
+	sw $t1, 512($t0)
+	sw $t1, 528($t0)
+	sw $t1, 768($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	li $t1, SCORE_COLOUR
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 516($t0)
+	sw $t1, 524($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	li $t1, BODY_COLOUR
+	sw $t1, 520($t0)
+	addi $t0, $t0, 1796
+	jr $ra
+small_J:
+	sw $t1, 8($t0)
+	sw $t1, 264($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+small_F:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 1024($t0)
+	jr $ra
+small_D:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+small_S:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+small_R:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+small_Q:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_keycap:
+	addi $t0, $t0, -264
+	li $t1, FLOOR_DARK
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	li $t1, SCORE_COLOUR
+	addi $t0, $t0, 264
+	jr $ra
 big_8:
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
