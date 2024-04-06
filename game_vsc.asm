@@ -166,11 +166,65 @@ main_title:
 	addi $a0, $a0, SCORE_LOCATION
 	move $a1, $t4
 	jal draw_score
-	# title AB-58 
+	# title "ALIEN"
 	li $t0, BASE_ADDRESS
-	addi $t0, $t0, 8192
-	# first letter A
-	addi $t0, $t0, 48
+	addi $t0, $t0, 2648
+	li $t1, TIMER_COLOUR
+	# first char A
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	# second char L
+	addi $t0, $t0, 16
+	sw $t1, 0($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 768($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	# third char I
+	addi $t0, $t0, 16
+	sw $t1, 0($t0)
+	sw $t1, 8($t0)
+	sw $t1, 260($t0)
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	# fourth char E
+	addi $t0, $t0, 16
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	# fifth char N
+	addi $t0, $t0, 16
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	# title "AB-58"
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 4144
+	# first char A
 	li $t1, LASER_COLOUR # fill up A hole
 	sw $t1, 520($t0)
 	sw $t1, 524($t0)
@@ -180,7 +234,7 @@ main_title:
 	sw $t1, 784($t0)
 	li $t1, BODY_COLOUR
     jal draw_A
-	# second letter B 
+	# second char B 
 	addi $t0, $t0, 32
 	li $t1, BOSS_COLOUR
     jal draw_B
@@ -264,6 +318,14 @@ main_title:
 	sw $t1, 1808($t0)
 	sw $t1, 1812($t0)
 	jal init_playser
+	li $t0, 13
+	li $t2, 23
+	li $t6, 2
+	sh $t0, player+0($zero)
+	sh $t2, player+2($zero)
+	sb $t6, player+6($zero)
+	# draw "<-" 
+	# draw "->"
 main_title_loop:
 	# temporary game init
 	#li $t9, 0xffff0000
