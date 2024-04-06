@@ -1481,36 +1481,15 @@ r_pressed:
 # end screen where game results are shown
 end_screen:
 	jal reset_screen
-	# draw timer
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, TIMER_LOCATION # starting point
-	li $t1, TIMER_COLOUR
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)	
-	sw $t1, 256($t0)
-	sw $t1, 272($t0)	
-	sw $t1, 512($t0)
-	sw $t1, 528($t0)
-	sw $t1, 768($t0)
-	sw $t1, 784($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	li $t1, SCORE_COLOUR
-	sw $t1, 260($t0)
-	sw $t1, 268($t0)	
-	sw $t1, 516($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)	
+    jal draw_timer
 	# draw remaining time
 	lh $t2, counters+2($zero)
 	li $a0, BASE_ADDRESS
 	addi $a0, $a0, SCORE_LOCATION
 	move $a1, $t2
 	jal draw_score
-
     # check if time up
     lh $t2, counters+2($zero)
     beqz $t2, time_up
@@ -1557,7 +1536,7 @@ victory:
     bge $t2, 47, rank_C
     bgt $t2, 1, rank_D
 rank_S: # exactly 1 second left !!!
-    li $t1, GOLD 
+    li $t1, CROWN_COLOUR 
     jal draw_S
 rank_A:
 	li $t1, LASER_COLOUR # fill up A hole
@@ -1616,6 +1595,9 @@ time_up:
     jal draw_E
     # apostrophe
     addi $t0, $t0, 32
+	sw $t1, 0($t0)
+	sw $t1, 256($t0)
+    addi $t0, $t0, 8    
     jal draw_S
     addi $t0, $t0, 12 # space
     addi $t0, $t0, 32
@@ -1626,6 +1608,136 @@ time_up:
     j BYEBYE
 
 
+draw_P:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1792($t0)
+    jr $ra
+draw_M:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+    jr $ra
+draw_T:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+    jr $ra
+draw_timer:
+	li $t1, TIMER_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)	
+	sw $t1, 256($t0)
+	sw $t1, 272($t0)	
+	sw $t1, 512($t0)
+	sw $t1, 528($t0)
+	sw $t1, 768($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	li $t1, SCORE_COLOUR
+	sw $t1, 260($t0)
+	sw $t1, 268($t0)	
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)	
+    jr $ra
 reset_screen:
 	li $t1, BACKGROUND
 	move $t2, $zero
