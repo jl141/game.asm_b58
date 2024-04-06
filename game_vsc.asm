@@ -144,22 +144,7 @@ main_title:
 	# print crown symbol
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, TIMER_LOCATION # starting point
-	li $t1, CROWN_COLOUR
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 264($t0)
-	sw $t1, 272($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 524($t0)
-	sw $t1, 528($t0)
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
-	li $t1, LASER_COLOUR
-	sw $t1, 520($t0)
+	jal draw_crown
 	# draw high score
 	sh $t4, counters+4($zero)
 	li $a0, BASE_ADDRESS
@@ -170,68 +155,20 @@ main_title:
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 2648
 	li $t1, TIMER_COLOUR
-	# first char A
-	sw $t1, 4($t0)
-	sw $t1, 256($t0)
-	sw $t1, 264($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 768($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1032($t0)
-	# second char L
+	jal small_A
 	addi $t0, $t0, 16
-	sw $t1, 0($t0)
-	sw $t1, 256($t0)
-	sw $t1, 512($t0)
-	sw $t1, 768($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	# third char I
+	jal small_L
 	addi $t0, $t0, 16
-	sw $t1, 0($t0)
-	sw $t1, 8($t0)
-	sw $t1, 260($t0)
-	sw $t1, 516($t0)
-	sw $t1, 772($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1032($t0)
-	# fourth char E
+	jal small_I
 	addi $t0, $t0, 16
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 768($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	# fifth char N
+	jal small_E
 	addi $t0, $t0, 16
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 256($t0)
-	sw $t1, 264($t0)
-	sw $t1, 512($t0)
-	sw $t1, 520($t0)
-	sw $t1, 768($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1032($t0)
+	jal small_N
 	# title "AB-58"
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 4144
 	# first char A
-	li $t1, LASER_COLOUR # fill up A hole
-	sw $t1, 520($t0)
-	sw $t1, 524($t0)
-	sw $t1, 528($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
+	jal A_hole
 	li $t1, BODY_COLOUR
     jal draw_A
 	# second char B 
@@ -243,80 +180,11 @@ main_title:
     jal draw_dash
 	# fourth char 5
 	addi $t0, $t0, 32
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 20($t0)
-	sw $t1, 24($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 268($t0)
-	sw $t1, 272($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
-	sw $t1, 788($t0)
-	sw $t1, 1036($t0)
-	sw $t1, 1040($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-	sw $t1, 1284($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1304($t0)
-	sw $t1, 1540($t0)
-	sw $t1, 1544($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1552($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1560($t0)
-	sw $t1, 1800($t0)
-	sw $t1, 1804($t0)
-	sw $t1, 1808($t0)
-	sw $t1, 1812($t0)
+	jal big_5
 	# fifth char 8
 	addi $t0, $t0, 32
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 20($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 532($t0)
-	sw $t1, 536($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
-	sw $t1, 788($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-	sw $t1, 1280($t0)
-	sw $t1, 1284($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1304($t0)
-	sw $t1, 1536($t0)
-	sw $t1, 1540($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1560($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1800($t0)
-	sw $t1, 1804($t0)
-	sw $t1, 1808($t0)
-	sw $t1, 1812($t0)
+	jal big_8
+	# initialize player and laser for main screen
 	jal init_playser
 	li $t0, 13
 	li $t2, 23
@@ -327,11 +195,6 @@ main_title:
 	# draw "<-" 
 	# draw "->"
 main_title_loop:
-	# temporary game init
-	#li $t9, 0xffff0000
-	#lw $t8, 4($t9) 
-	#beq $t8, 0x67, game_init # start game
-
 	# check for input
 	jal check_keypress
     # update positions
@@ -339,6 +202,10 @@ main_title_loop:
 	# check for playser boundaries
     jal player_borders
 	jal laser_borders
+	# exit/start game if player reaches left/right border
+	lh $t0, player+0($zero)
+	blt $t0, 0, BYEBYE
+	bgt $t0, 60, game_init
     # update main title screen
     jal erase_playser
     jal paint_playser
@@ -423,8 +290,9 @@ init_hearts_loop:
 	sw $t1, 516($t0)
 	sw $t1, 772($t0)
 	sw $t1, 776($t0)
-	sw $t1, 780($t0)	
-	# initialize timer
+	sw $t1, 780($t0)
+	# initialize counters
+	sh $zero, counters+0($zero)
 	li $t2, MAX_TIME
 	sh $t2, counters+2($zero)
 	li $a0, BASE_ADDRESS
@@ -1610,13 +1478,7 @@ rank_S: # exactly 1 second left !!!
     jal draw_S
     j finish_rank
 rank_A:
-	li $t1, LASER_COLOUR # fill up A hole
-	sw $t1, 520($t0)
-	sw $t1, 524($t0)
-	sw $t1, 528($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
+	jal A_hole
 	li $t1, BODY_COLOUR
     jal draw_A
     j finish_rank
@@ -1632,7 +1494,8 @@ rank_D:
     li $t1, DART_COLOUR
     jal draw_D
 finish_rank:
-    j BYEBYE
+    j end_screen_loop
+
 defeat:
 	# draw "YOU DIED"
 	li $t0, BASE_ADDRESS
@@ -1653,7 +1516,7 @@ defeat:
     addi $t0, $t0, 32
     jal draw_D
 
-    j BYEBYE
+    j end_screen_loop
 
 time_up:
     # draw "TIME'S UP"
@@ -1679,9 +1542,185 @@ time_up:
     addi $t0, $t0, 32
     jal draw_P
 
-    j BYEBYE
+    j end_screen_loop
+
+end_screen_loop:
+	# check for keypress
+	li $t9, 0xffff0000
+	lw $t8, 0($t9)
+	beq $t8, 1, end_screen_keypressed
+	j end_screen_frame_delay
+end_screen_keypressed:
+	lw $t8, 4($t9)
+	beq $t8, 0x71, q_pressed
+	beq $t8, 0x72, r_pressed
+end_screen_frame_delay:
+	jal frame_delay
+	j end_screen_loop
 
 
+
+
+
+
+
+big_8:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	jr $ra
+big_5:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	jr $ra
+A_hole: # fill up A hole
+	li $t1, LASER_COLOUR 
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	jr $ra
+small_N:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+small_E:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+small_I:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 260($t0)
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+small_L:
+	sw $t1, 0($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 768($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+small_A:
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_crown:
+	li $t1, CROWN_COLOUR
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	li $t1, LASER_COLOUR
+	sw $t1, 520($t0)
+	jr $ra
 draw_P:
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -1955,9 +1994,10 @@ draw_floor:
 	sw $t1, 504($t0)
 	sw $t1, 508($t0)
 	jr $ra
+# Draws the score in a1 with location a0
+# a0: start location
+# a1: score value
 draw_score:
-	# a0: start location
-	# a1: score value
 	move $a3, $ra # save $ra in $a3
 	move $t0, $a0 # start location into $t0
 	li $t1, 100
@@ -2666,11 +2706,6 @@ draw_E:
 	sw $t1, 1812($t0)
 	sw $t1, 1816($t0)
     jr $ra
-
-
-
-
-
 
 BYEBYE:
 	li $v0, 10 
