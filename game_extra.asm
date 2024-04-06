@@ -129,8 +129,8 @@ slider: .space 10
 # 2 bytes: high score
 counters: .space 6
 
-# storage for 2 return addresses
-retadd: .space 8
+# storage for a return address
+retadd: .space 4
 
 .globl init
 .text
@@ -174,7 +174,7 @@ main_title:
 	addi $t0, $t0, 8192
 	# first letter A
 	addi $t0, $t0, 48
-	li $t1, LASER_COLOUR
+	li $t1, LASER_COLOUR # fill up A hole
 	sw $t1, 520($t0)
 	sw $t1, 524($t0)
 	sw $t1, 528($t0)
@@ -182,96 +182,16 @@ main_title:
 	sw $t1, 780($t0)
 	sw $t1, 784($t0)
 	li $t1, BODY_COLOUR
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 20($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 268($t0)
-	sw $t1, 272($t0)
-	sw $t1, 276($t0)
-	sw $t1, 516($t0)
-	sw $t1, 532($t0)
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 788($t0)
-	sw $t1, 792($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	sw $t1, 1040($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-	sw $t1, 1280($t0)
-	sw $t1, 1284($t0)
-	sw $t1, 1288($t0)
-	sw $t1, 1292($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1304($t0)
-	sw $t1, 1536($t0)
-	sw $t1, 1540($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1560($t0)
-	sw $t1, 1792($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1812($t0)
-	sw $t1, 1816($t0)
+    jal draw_A
 	
 	# second letter B 
 	addi $t0, $t0, 32
 	li $t1, BOSS_COLOUR
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 256($t0)
-	sw $t1, 268($t0)
-	sw $t1, 272($t0)
-	sw $t1, 276($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 528($t0)
-	sw $t1, 532($t0)
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	sw $t1, 1040($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1280($t0)
-	sw $t1, 1284($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1536($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1552($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1792($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1800($t0)
-	sw $t1, 1804($t0)
-	sw $t1, 1808($t0)
+    jal draw_B
 
 	# third char - 
 	addi $t0, $t0, 32
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 784($t0)
-	sw $t1, 788($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	sw $t1, 1040($t0)
+    jal draw_dash
 
 	# fourth char 5
 	addi $t0, $t0, 32
@@ -365,319 +285,7 @@ main_title_keypressed:
 	beq $t8, 0x67, game_init # key g
 	j main_title_loop_refresh
 
-reset_screen:
-	li $t1, BACKGROUND
-	move $t2, $zero
-reset_screen_loop:
-	sw $t1, BASE_ADDRESS($t2)
-	addi $t2, $t2, 4
-	bne $t2, 16380, reset_screen_loop
-draw_floor:
-	# draw floor as part of the reset
-	li $t0, BASE_ADDRESS
-	li $t1, FLOOR_HEIGHT
-	mul $t1, $t1, 256
-	add $t0, $t0, $t1 # floor height in $t0
-	li $t1, FLOOR_DARK
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 20($t0)
-	sw $t1, 24($t0)
-	sw $t1, 28($t0)
-	sw $t1, 32($t0)
-	sw $t1, 36($t0)
-	sw $t1, 40($t0)
-	sw $t1, 44($t0)
-	sw $t1, 48($t0)
-	sw $t1, 52($t0)
-	sw $t1, 56($t0)
-	sw $t1, 60($t0)
-	sw $t1, 64($t0)
-	sw $t1, 68($t0)
-	sw $t1, 72($t0)
-	sw $t1, 76($t0)
-	sw $t1, 80($t0)
-	sw $t1, 84($t0)
-	sw $t1, 88($t0)
-	sw $t1, 92($t0)
-	sw $t1, 96($t0)
-	sw $t1, 100($t0)
-	sw $t1, 104($t0)
-	sw $t1, 108($t0)
-	sw $t1, 112($t0)
-	sw $t1, 116($t0)
-	sw $t1, 120($t0)
-	sw $t1, 124($t0)
-	sw $t1, 128($t0)
-	sw $t1, 132($t0)
-	sw $t1, 136($t0)
-	sw $t1, 140($t0)
-	sw $t1, 144($t0)
-	sw $t1, 148($t0)
-	sw $t1, 152($t0)
-	sw $t1, 156($t0)
-	sw $t1, 160($t0)
-	sw $t1, 164($t0)
-	sw $t1, 168($t0)
-	sw $t1, 172($t0)
-	sw $t1, 176($t0)
-	sw $t1, 180($t0)
-	sw $t1, 184($t0)
-	sw $t1, 188($t0)
-	sw $t1, 192($t0)
-	sw $t1, 196($t0)
-	sw $t1, 200($t0)
-	sw $t1, 204($t0)
-	sw $t1, 208($t0)
-	sw $t1, 212($t0)
-	sw $t1, 216($t0)
-	sw $t1, 220($t0)
-	sw $t1, 224($t0)
-	sw $t1, 228($t0)
-	sw $t1, 232($t0)
-	sw $t1, 236($t0)
-	sw $t1, 240($t0)
-	sw $t1, 244($t0)
-	sw $t1, 248($t0)
-	sw $t1, 252($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 268($t0)
-	sw $t1, 272($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-	sw $t1, 284($t0)
-	sw $t1, 288($t0)
-	sw $t1, 292($t0)
-	sw $t1, 296($t0)
-	sw $t1, 300($t0)
-	sw $t1, 304($t0)
-	sw $t1, 308($t0)
-	sw $t1, 312($t0)
-	sw $t1, 316($t0)
-	sw $t1, 320($t0)
-	sw $t1, 324($t0)
-	sw $t1, 328($t0)
-	sw $t1, 332($t0)
-	sw $t1, 336($t0)
-	sw $t1, 340($t0)
-	sw $t1, 344($t0)
-	sw $t1, 348($t0)
-	sw $t1, 352($t0)
-	sw $t1, 356($t0)
-	sw $t1, 360($t0)
-	sw $t1, 364($t0)
-	sw $t1, 368($t0)
-	sw $t1, 372($t0)
-	sw $t1, 376($t0)
-	sw $t1, 380($t0)
-	sw $t1, 384($t0)
-	sw $t1, 388($t0)
-	sw $t1, 392($t0)
-	sw $t1, 396($t0)
-	sw $t1, 400($t0)
-	sw $t1, 404($t0)
-	sw $t1, 408($t0)
-	sw $t1, 412($t0)
-	sw $t1, 416($t0)
-	sw $t1, 420($t0)
-	sw $t1, 424($t0)
-	sw $t1, 428($t0)
-	sw $t1, 432($t0)
-	sw $t1, 436($t0)
-	sw $t1, 440($t0)
-	sw $t1, 444($t0)
-	sw $t1, 448($t0)
-	sw $t1, 452($t0)
-	sw $t1, 456($t0)
-	sw $t1, 460($t0)
-	sw $t1, 464($t0)
-	sw $t1, 468($t0)
-	sw $t1, 472($t0)
-	sw $t1, 476($t0)
-	sw $t1, 480($t0)
-	sw $t1, 484($t0)
-	sw $t1, 488($t0)
-	sw $t1, 492($t0)
-	sw $t1, 496($t0)
-	sw $t1, 500($t0)
-	sw $t1, 504($t0)
-	sw $t1, 508($t0)
-	jr $ra
 
-draw_score:
-	# a0: start location
-	# a1: score value
-	move $a3, $ra # save $ra in $a3
-	move $t0, $a0 # start location into $t0
-	li $t1, 100
-	div $a1, $t1 # divide a1 by 100
-	mflo $t5 # 100's digit in $t5
-	mfhi $a1 # remainder in $a1
-	li $t1, 10
-	div $a1, $t1 # divide a1 by 10
-	mflo $t6 # 10's digit in $t6
-	mfhi $t7 # 1's digit in $t7
-digit_100:
-	jal draw_space # space for digit
-	move $a0, $t5 # print $t5
-	jal draw_digit
-digit_10:
-	addi $t0, $t0, 16 # move to next digit
-	jal draw_space # space for digit
-	move $a0, $t6 # print $t6	
-	jal draw_digit
-digit_1:
-	addi $t0, $t0, 16 # move to next digit
-	jal draw_space # space for digit
-	move $a0, $t7 # print $t7	
-	jal draw_digit
-	jr $a3 # final return address
-draw_space:
-	li $t1, BACKGROUND
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	jr $ra
-draw_digit:
-	li $t1, SCORE_COLOUR
-	beq $a0, 1, draw_1
-	beq $a0, 2, draw_2
-	beq $a0, 3, draw_3
-	beq $a0, 4, draw_4
-	beq $a0, 5, draw_5
-	beq $a0, 6, draw_6
-	beq $a0, 7, draw_7
-	beq $a0, 8, draw_8
-	beq $a0, 9, draw_9
-draw_0:
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 264($t0)
-	sw $t1, 512($t0)
-	sw $t1, 520($t0)
-	sw $t1, 768($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	jr $ra
-draw_1:
-	sw $t1, 4($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 516($t0)
-	sw $t1, 772($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	jr $ra
-draw_2:
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 264($t0)
-	sw $t1, 516($t0)
-	sw $t1, 768($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	jr $ra
-draw_3:
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 264($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	jr $ra
-draw_4:
-	sw $t1, 0($t0)
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 264($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1032($t0)
-	jr $ra
-draw_5:
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	jr $ra
-draw_6:
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 768($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	jr $ra
-draw_7:
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 264($t0)
-	sw $t1, 516($t0)
-	sw $t1, 772($t0)
-	sw $t1, 1024($t0)
-	jr $ra
-draw_8:
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 264($t0)
-	sw $t1, 516($t0)
-	sw $t1, 768($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	jr $ra
-draw_9:
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 256($t0)
-	sw $t1, 264($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 776($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	jr $ra
 
 game_init:
 	jal reset_screen
@@ -1910,133 +1518,754 @@ end_screen:
 	lb $t7, player+7($zero)
 	beqz $t7, defeat
 victory:
-	# draw "YOU WIN"
+	# draw "SUCCESS"
 	li $t0, BASE_ADDRESS
-	addi $t0, $t0, 4108
+	addi $t0, $t0, 4116
 	li $t1, BOSS_COLOUR
-	# Y
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 20($t0)
-	sw $t1, 24($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
+    jal draw_S
+    addi $t0, $t0, 32
+    jal draw_U
+    addi $t0, $t0, 32
+    jal draw_C
+    addi $t0, $t0, 32
+    jal draw_C
+    addi $t0, $t0, 32
+    jal draw_E
+    addi $t0, $t0, 32
+    jal draw_S
+    addi $t0, $t0, 32
+    jal draw_S
+	# draw "RANK: "
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 6708
+	li $t1, FLOOR_LIGHT
+    jal draw_R
+    addi $t0, $t0, 32
+    jal draw_A
+    addi $t0, $t0, 32
+    jal draw_N
+    addi $t0, $t0, 32
+    jal draw_K
+    addi $t0, $t0, 32
+    jal draw_colon
+    addi $t0, $t0, 12 # space
+    addi $t0, $t0, 32
+    # draw rank (either A B C D S)
+    la $ra, finish_rank
+    bge $t2, 100, rank_A
+    bge $t2, 80, rank_B
+    bge $t2, 47, rank_C
+    bgt $t2, 1, rank_D
+rank_S: # exactly 1 second left !!!
+    li $t1, GOLD 
+    jal draw_S
+rank_A:
+	li $t1, LASER_COLOUR # fill up A hole
 	sw $t1, 520($t0)
+	sw $t1, 524($t0)
 	sw $t1, 528($t0)
-	sw $t1, 532($t0)
-	sw $t1, 536($t0)
-	sw $t1, 772($t0)
 	sw $t1, 776($t0)
 	sw $t1, 780($t0)
 	sw $t1, 784($t0)
-	sw $t1, 788($t0)
-	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	sw $t1, 1040($t0)
-	sw $t1, 1288($t0)
-	sw $t1, 1292($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1540($t0)
-	sw $t1, 1544($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1792($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1800($t0)
-	# O
-	addi $t0, $t0, 32
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 20($t0)
-	sw $t1, 24($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 268($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 536($t0)
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 788($t0)
-	sw $t1, 792($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-	sw $t1, 1280($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1304($t0)
-	sw $t1, 1536($t0)
-	sw $t1, 1540($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1552($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1560($t0)
-	sw $t1, 1792($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1800($t0)
-	sw $t1, 1804($t0)
-	sw $t1, 1808($t0)
-	sw $t1, 1812($t0)
-	# U
-	addi $t0, $t0, 32
-	sw $t1, 0($t0)
-	sw $t1, 24($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 276($t0)
-	sw $t1, 280($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 532($t0)
-	sw $t1, 536($t0)
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 788($t0)
-	sw $t1, 792($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1040($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-	sw $t1, 1280($t0)
-	sw $t1, 1284($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1304($t0)
-	sw $t1, 1536($t0)
-	sw $t1, 1540($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1552($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1560($t0)
-	sw $t1, 1792($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1800($t0)
-	sw $t1, 1804($t0)
-	sw $t1, 1808($t0)
-	sw $t1, 1812($t0)
-	# space
-	addi $t0, $t0, 12
-
+	li $t1, BODY_COLOUR
+    jal draw_A
+rank_B:
+    li $t1, BOSS_COLOUR
+    jal draw_B
+rank_C:
+    li $t1, FLOOR_DARK
+    jal draw_C
+rank_D:
+    li $t1, DART_COLOUR
+    jal draw_D
+finish_rank:
     j BYEBYE
-
 defeat:
 	# draw "YOU DIED"
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 4108
 	li $t1, DART_COLOUR
-	# Y
+    jal draw_Y
+    addi $t0, $t0, 32
+    jal draw_O
+    addi $t0, $t0, 32
+    jal draw_U
+    addi $t0, $t0, 12 # space
+    addi $t0, $t0, 32
+    jal draw_D
+    addi $t0, $t0, 32
+    jal draw_I
+    addi $t0, $t0, 32
+    jal draw_E
+    addi $t0, $t0, 32
+    jal draw_D
+
+    j BYEBYE
+
+time_up:
+    # draw "TIME'S UP"
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 4104
+	li $t1, DART_COLOUR
+    jal draw_T
+    addi $t0, $t0, 32
+    jal draw_I
+    addi $t0, $t0, 32
+    jal draw_M
+    addi $t0, $t0, 32
+    jal draw_E
+    # apostrophe
+    addi $t0, $t0, 32
+    jal draw_S
+    addi $t0, $t0, 12 # space
+    addi $t0, $t0, 32
+    jal draw_U
+    addi $t0, $t0, 32
+    jal draw_P
+
+    j BYEBYE
+
+
+reset_screen:
+	li $t1, BACKGROUND
+	move $t2, $zero
+reset_screen_loop:
+	sw $t1, BASE_ADDRESS($t2)
+	addi $t2, $t2, 4
+	bne $t2, 16380, reset_screen_loop
+draw_floor:
+	# draw floor as part of the reset
+	li $t0, BASE_ADDRESS
+	li $t1, FLOOR_HEIGHT
+	mul $t1, $t1, 256
+	add $t0, $t0, $t1 # floor height in $t0
+	li $t1, FLOOR_DARK
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 28($t0)
+	sw $t1, 32($t0)
+	sw $t1, 36($t0)
+	sw $t1, 40($t0)
+	sw $t1, 44($t0)
+	sw $t1, 48($t0)
+	sw $t1, 52($t0)
+	sw $t1, 56($t0)
+	sw $t1, 60($t0)
+	sw $t1, 64($t0)
+	sw $t1, 68($t0)
+	sw $t1, 72($t0)
+	sw $t1, 76($t0)
+	sw $t1, 80($t0)
+	sw $t1, 84($t0)
+	sw $t1, 88($t0)
+	sw $t1, 92($t0)
+	sw $t1, 96($t0)
+	sw $t1, 100($t0)
+	sw $t1, 104($t0)
+	sw $t1, 108($t0)
+	sw $t1, 112($t0)
+	sw $t1, 116($t0)
+	sw $t1, 120($t0)
+	sw $t1, 124($t0)
+	sw $t1, 128($t0)
+	sw $t1, 132($t0)
+	sw $t1, 136($t0)
+	sw $t1, 140($t0)
+	sw $t1, 144($t0)
+	sw $t1, 148($t0)
+	sw $t1, 152($t0)
+	sw $t1, 156($t0)
+	sw $t1, 160($t0)
+	sw $t1, 164($t0)
+	sw $t1, 168($t0)
+	sw $t1, 172($t0)
+	sw $t1, 176($t0)
+	sw $t1, 180($t0)
+	sw $t1, 184($t0)
+	sw $t1, 188($t0)
+	sw $t1, 192($t0)
+	sw $t1, 196($t0)
+	sw $t1, 200($t0)
+	sw $t1, 204($t0)
+	sw $t1, 208($t0)
+	sw $t1, 212($t0)
+	sw $t1, 216($t0)
+	sw $t1, 220($t0)
+	sw $t1, 224($t0)
+	sw $t1, 228($t0)
+	sw $t1, 232($t0)
+	sw $t1, 236($t0)
+	sw $t1, 240($t0)
+	sw $t1, 244($t0)
+	sw $t1, 248($t0)
+	sw $t1, 252($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 284($t0)
+	sw $t1, 288($t0)
+	sw $t1, 292($t0)
+	sw $t1, 296($t0)
+	sw $t1, 300($t0)
+	sw $t1, 304($t0)
+	sw $t1, 308($t0)
+	sw $t1, 312($t0)
+	sw $t1, 316($t0)
+	sw $t1, 320($t0)
+	sw $t1, 324($t0)
+	sw $t1, 328($t0)
+	sw $t1, 332($t0)
+	sw $t1, 336($t0)
+	sw $t1, 340($t0)
+	sw $t1, 344($t0)
+	sw $t1, 348($t0)
+	sw $t1, 352($t0)
+	sw $t1, 356($t0)
+	sw $t1, 360($t0)
+	sw $t1, 364($t0)
+	sw $t1, 368($t0)
+	sw $t1, 372($t0)
+	sw $t1, 376($t0)
+	sw $t1, 380($t0)
+	sw $t1, 384($t0)
+	sw $t1, 388($t0)
+	sw $t1, 392($t0)
+	sw $t1, 396($t0)
+	sw $t1, 400($t0)
+	sw $t1, 404($t0)
+	sw $t1, 408($t0)
+	sw $t1, 412($t0)
+	sw $t1, 416($t0)
+	sw $t1, 420($t0)
+	sw $t1, 424($t0)
+	sw $t1, 428($t0)
+	sw $t1, 432($t0)
+	sw $t1, 436($t0)
+	sw $t1, 440($t0)
+	sw $t1, 444($t0)
+	sw $t1, 448($t0)
+	sw $t1, 452($t0)
+	sw $t1, 456($t0)
+	sw $t1, 460($t0)
+	sw $t1, 464($t0)
+	sw $t1, 468($t0)
+	sw $t1, 472($t0)
+	sw $t1, 476($t0)
+	sw $t1, 480($t0)
+	sw $t1, 484($t0)
+	sw $t1, 488($t0)
+	sw $t1, 492($t0)
+	sw $t1, 496($t0)
+	sw $t1, 500($t0)
+	sw $t1, 504($t0)
+	sw $t1, 508($t0)
+	jr $ra
+draw_score:
+	# a0: start location
+	# a1: score value
+	move $a3, $ra # save $ra in $a3
+	move $t0, $a0 # start location into $t0
+	li $t1, 100
+	div $a1, $t1 # divide a1 by 100
+	mflo $t5 # 100's digit in $t5
+	mfhi $a1 # remainder in $a1
+	li $t1, 10
+	div $a1, $t1 # divide a1 by 10
+	mflo $t6 # 10's digit in $t6
+	mfhi $t7 # 1's digit in $t7
+digit_100:
+	jal draw_space # space for digit
+	move $a0, $t5 # print $t5
+	jal draw_digit
+digit_10:
+	addi $t0, $t0, 16 # move to next digit
+	jal draw_space # space for digit
+	move $a0, $t6 # print $t6	
+	jal draw_digit
+digit_1:
+	addi $t0, $t0, 16 # move to next digit
+	jal draw_space # space for digit
+	move $a0, $t7 # print $t7	
+	jal draw_digit
+	jr $a3 # final return address
+draw_space:
+	li $t1, BACKGROUND
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_digit:
+	li $t1, SCORE_COLOUR
+	beq $a0, 1, draw_1
+	beq $a0, 2, draw_2
+	beq $a0, 3, draw_3
+	beq $a0, 4, draw_4
+	beq $a0, 5, draw_5
+	beq $a0, 6, draw_6
+	beq $a0, 7, draw_7
+	beq $a0, 8, draw_8
+	beq $a0, 9, draw_9
+draw_0:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_1:
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_2:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_3:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_4:
+	sw $t1, 0($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1032($t0)
+	jr $ra
+draw_5:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_6:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_7:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1024($t0)
+	jr $ra
+draw_8:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_9:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	jr $ra
+draw_colon:
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+    jr $ra
+draw_K:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+    jr $ra
+draw_N:
+	sw $t1, 4($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1812($t0)
+    jr $ra
+draw_dash:
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+    jr $ra
+draw_B:
+	sw $t1, 0($t0)
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 256($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+    jr $ra
+draw_A:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 788($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+    jr $ra
+draw_C:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+    jr $ra
+draw_S:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 268($t0)
+	sw $t1, 272($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1044($t0)
+	sw $t1, 1048($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1304($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+    jr $ra
+draw_R:
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)
+	sw $t1, 16($t0)
+	sw $t1, 20($t0)
+	sw $t1, 24($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 276($t0)
+	sw $t1, 280($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 528($t0)
+	sw $t1, 532($t0)
+	sw $t1, 536($t0)
+	sw $t1, 768($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 784($t0)
+	sw $t1, 788($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1280($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1552($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
+    jr $ra
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# space
+	addi $t0, $t0, 12
+
+    j BYEBYE
+
+draw_Y:
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 20($t0)
@@ -2068,8 +2297,8 @@ defeat:
 	sw $t1, 1792($t0)
 	sw $t1, 1796($t0)
 	sw $t1, 1800($t0)
-	# O
-	addi $t0, $t0, 32
+    jr $ra
+draw_O:
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
 	sw $t1, 12($t0)
@@ -2110,8 +2339,8 @@ defeat:
 	sw $t1, 1804($t0)
 	sw $t1, 1808($t0)
 	sw $t1, 1812($t0)
-	# U
-	addi $t0, $t0, 32
+    jr $ra
+draw_U:
 	sw $t1, 0($t0)
 	sw $t1, 24($t0)
 	sw $t1, 256($t0)
@@ -2148,10 +2377,8 @@ defeat:
 	sw $t1, 1804($t0)
 	sw $t1, 1808($t0)
 	sw $t1, 1812($t0)
-	# space
-	addi $t0, $t0, 12
-	# D
-	addi $t0, $t0, 32
+    jr $ra
+draw_D:
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -2186,8 +2413,8 @@ defeat:
 	sw $t1, 1796($t0)
 	sw $t1, 1800($t0)
 	sw $t1, 1804($t0)
-	# I
-	addi $t0, $t0, 32
+    jr $ra
+draw_I:
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
 	sw $t1, 12($t0)
@@ -2217,8 +2444,8 @@ defeat:
 	sw $t1, 1804($t0)
 	sw $t1, 1808($t0)
 	sw $t1, 1812($t0)
-	# E
-	addi $t0, $t0, 32
+    jr $ra
+draw_E:
 	sw $t1, 8($t0)
 	sw $t1, 12($t0)
 	sw $t1, 16($t0)
@@ -2252,48 +2479,8 @@ defeat:
 	sw $t1, 1808($t0)
 	sw $t1, 1812($t0)
 	sw $t1, 1816($t0)
-	# D
-	addi $t0, $t0, 32
-	sw $t1, 0($t0)
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)
-	sw $t1, 16($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 272($t0)
-	sw $t1, 276($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 532($t0)
-	sw $t1, 536($t0)
-	sw $t1, 768($t0)
-	sw $t1, 772($t0)
-	sw $t1, 788($t0)
-	sw $t1, 792($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1044($t0)
-	sw $t1, 1048($t0)
-	sw $t1, 1280($t0)
-	sw $t1, 1296($t0)
-	sw $t1, 1300($t0)
-	sw $t1, 1304($t0)
-	sw $t1, 1536($t0)
-	sw $t1, 1544($t0)
-	sw $t1, 1548($t0)
-	sw $t1, 1552($t0)
-	sw $t1, 1556($t0)
-	sw $t1, 1792($t0)
-	sw $t1, 1796($t0)
-	sw $t1, 1800($t0)
-	sw $t1, 1804($t0)
-	
-	j BYEBYE
+    jr $ra
 
-time_up:
-
-    j BYEBYE
 
 
 
@@ -2303,3 +2490,4 @@ BYEBYE:
 	li $v0, 10 
 	syscall
 
+# :shushing_face: :deaf_man:
