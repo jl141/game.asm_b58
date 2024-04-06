@@ -537,7 +537,6 @@ digit_1:
 	move $a0, $t7 # print $t7	
 	jal draw_digit
 	jr $a3 # final return address
-
 draw_space:
 	li $t1, BACKGROUND
 	sw $t1, 0($t0)
@@ -560,7 +559,6 @@ draw_space:
 	sw $t1, 1028($t0)
 	sw $t1, 1032($t0)
 	jr $ra
-
 draw_digit:
 	li $t1, SCORE_COLOUR
 	beq $a0, 1, draw_1
@@ -767,7 +765,6 @@ init_hearts_loop:
 	li $t0, 56
 	li $t2, 54
 	li $t7, 58
-	li $t9, 0
 	sh $t0, boss+0($zero)
 	sh $t2, boss+2($zero)
 	sh $zero, boss+4($zero)
@@ -775,7 +772,7 @@ init_hearts_loop:
 	sb $zero, boss+6($zero)
 	sb $t7, boss+7($zero)
 	sb $zero, boss+8($zero)	
-	sb $t9, boss+9($zero)
+	sb $zero, boss+9($zero)
 	sh $t0, boss+10($zero)
 	sh $t2, boss+12($zero)
 	# initialize dart states
@@ -839,9 +836,9 @@ game_loop:
 second_elasped:
 	lh $t2, counters+2($zero)	
 	addi $t2, $t2, -1
-	beqz $t2, end_screen
 	sh $zero, counters+0($zero)
 	sh $t2, counters+2($zero)
+	beqz $t2, end_screen
 	jal paint_time
 game_frame_delay:
 	jal frame_delay
@@ -856,7 +853,7 @@ boss_action:
 	# boss action
 	li $v0, 42
 	li $a0, 0
-	li $a1, 15
+	li $a1, 16
 	syscall
 	# only do action if jump state is 0
 	lb $t4, boss+4($zero)
@@ -865,7 +862,7 @@ boss_action:
 	bne $t6, 0, boss_update_position	
 	blt $a0, 1, boss_shoot
 	blt $a0, 2, boss_jump
-	blt $a0, 10, boss_move
+	blt $a0, 4, boss_move
 boss_idle:
 	li $t4, 0
 	li $t5, 0
@@ -987,18 +984,19 @@ game_player_collisions:
 	lb $t6, player+6($zero) # jump state
 	lb $t7, player+7($zero) # health points
     # if player on floor, skip platform check
-    addi $t2, $t2, PLAYER_HEIGHT
-    bge $t2, FLOOR_HEIGHT, player_boss
+    addi $t8, $t2, PLAYER_HEIGHT
+    bge $t8, FLOOR_HEIGHT, player_boss
 player_platforms:
-	# if velocity is going up, do not check for platform collision
-	blt $t5, $zero, player_slider
 player_platform_1:
 	# check player-platform_1 collision
+    # check that player below or on top of platform 
 	lh $t8, platform_1+2($zero)
-	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_platform_2 
+    # check that previous player position not below platform
 	lh $t9, player+12($zero) # previous y position
-	bgt $t9, $t8, player_platform_2 # check previous y position
-	ble $t2, $t8, player_platform_2 # check new y position
+    bgt $t9, $t8, player_platform_2
+    # check x bounds
 	lh $t9, platform_1+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_2 # check left edge of platform
@@ -1012,11 +1010,14 @@ player_platform_1:
 	j player_slider
 player_platform_2:
 	# check player-platform_2 collision
+    # check that player below or on top of platform 
 	lh $t8, platform_2+2($zero)
-	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_platform_3 
+    # check that previous player position not below platform
 	lh $t9, player+12($zero) # previous y position
-	bgt $t9, $t8, player_platform_3 # check previous y position
-	ble $t2, $t8, player_platform_3 # check new y position
+    bgt $t9, $t8, player_platform_3
+    # check x bounds
 	lh $t9, platform_2+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_3 # check left edge of platform
@@ -1030,11 +1031,14 @@ player_platform_2:
 	j player_slider
 player_platform_3:
 	# check player-platform_3 collision
+    # check that player below or on top of platform 
 	lh $t8, platform_3+2($zero)
-	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_platform_4 
+    # check that previous player position not below platform
 	lh $t9, player+12($zero) # previous y position
-	bgt $t9, $t8, player_platform_4 # check previous y position
-	ble $t2, $t8, player_platform_4 # check new y position
+    bgt $t9, $t8, player_platform_4
+    # check x bounds
 	lh $t9, platform_3+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_4 # check left edge of platform
@@ -1048,11 +1052,14 @@ player_platform_3:
 	j player_slider
 player_platform_4:
 	# check player-platform_4 collision
+    # check that player below or on top of platform 
 	lh $t8, platform_4+2($zero)
-	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_platform_5
+    # check that previous player position not below platform
 	lh $t9, player+12($zero) # previous y position
-	bgt $t9, $t8, player_platform_5 # check previous y position
-	ble $t2, $t8, player_platform_5 # check new y position
+    bgt $t9, $t8, player_platform_5
+    # check x bounds
 	lh $t9, platform_4+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_5 # check left edge of platform
@@ -1066,11 +1073,14 @@ player_platform_4:
 	j player_slider
 player_platform_5:
 	# check player-platform_5 collision
+    # check that player below or on top of platform 
 	lh $t8, platform_5+2($zero)
-	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_slider
+    # check that previous player position not below platform
 	lh $t9, player+12($zero) # previous y position
-	bgt $t9, $t8, player_slider # check previous y position
-	ble $t2, $t8, player_slider # check new y position
+    bgt $t9, $t8, player_slider
+    # check x bounds
 	lh $t9, platform_5+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_slider # check left edge of platform
@@ -1083,15 +1093,15 @@ player_platform_5:
 	sb $zero, player+6($zero)
 player_slider:
 	# check player-slider collision
+    # check that player below or on top of slider 
 	lh $t8, slider+2($zero)
-	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	addi $t8, $t8, -PLAYER_HEIGHT
+	blt $t2, $t8, player_boss
+    # check that previous player position not far below platform
 	lh $t9, player+12($zero) # previous y position
-	bgt $t9, $t8, player_boss # check previous y position
-	ble $t2, $t8, player_boss # check new y position
-	#lh $t8, slider+2($zero)
-	#bgt $t2, $t8, player_boss # check y position
-	#addi $t8, $t8, -PLAYER_HEIGHT
-	#blt $t2, $t8, player_boss # check foot position
+    addi $t9, $t9, -1
+    bgt $t9, $t8, player_boss
+    # check x bounds
 	lh $t9, slider+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_boss # check left edge of platform
@@ -1237,10 +1247,10 @@ boss_laser:
 	# update boss states accordingly
 	lb $t7, boss+7($zero)
 	addi $t7, $t7, -LASER_DMG # lose health
-	blez $t7, end_screen
 	li $t8, 1
 	sb $t7, boss+7($zero)
-	sb $t8, boss+8($zero)	
+	sb $t8, boss+8($zero)
+	blez $t7, end_screen
 	jal stop_laser
 game_check_laser_borders:
     jal laser_borders
@@ -1826,7 +1836,8 @@ j_pressed: # jump
 player_jump:
 	li $t4, 0 # x speed
 	sb $t4, player+4($zero)
-	li $t5, -4 # jump speed
+	lb $t5, player+5($zero)	# get y velocity
+	addi $t5, $t5, -4 # add jump speed
 	sb $t5, player+5($zero)	
 	li $t6, 1 # new jump state
 	sb $t6, player+6($zero)
@@ -1862,14 +1873,47 @@ r_pressed:
 # end screen where game results are shown
 end_screen:
 	jal reset_screen
+	# draw timer
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, TIMER_LOCATION # starting point
+	li $t1, TIMER_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 12($t0)	
+	sw $t1, 256($t0)
+	sw $t1, 272($t0)	
+	sw $t1, 512($t0)
+	sw $t1, 528($t0)
+	sw $t1, 768($t0)
+	sw $t1, 784($t0)
+	sw $t1, 1028($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	li $t1, SCORE_COLOUR
+	sw $t1, 260($t0)
+	sw $t1, 268($t0)	
+	sw $t1, 516($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)	
+	# draw remaining time
+	lh $t2, counters+2($zero)
+	li $a0, BASE_ADDRESS
+	addi $a0, $a0, SCORE_LOCATION
+	move $a1, $t2
+	jal draw_score
+
+    # check if time up
+    lh $t2, counters+2($zero)
+    beqz $t2, time_up
 	# check if player won/lost
-	lb $t0, player+7($zero)
-	beqz $t0, defeat
+	lb $t7, player+7($zero)
+	beqz $t7, defeat
 victory:
-	# draw "YOU WON"
+	# draw "YOU WIN"
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 4108
-	li $t1, DART_COLOUR
+	li $t1, BOSS_COLOUR
 	# Y
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
@@ -1985,37 +2029,9 @@ victory:
 	# space
 	addi $t0, $t0, 12
 
+    j BYEBYE
 
 defeat:
-	# draw timer
-	li $t0, BASE_ADDRESS
-	addi $t0, $t0, TIMER_LOCATION # starting point
-	li $t1, TIMER_COLOUR
-	sw $t1, 4($t0)
-	sw $t1, 8($t0)
-	sw $t1, 12($t0)	
-	sw $t1, 256($t0)
-	sw $t1, 272($t0)	
-	sw $t1, 512($t0)
-	sw $t1, 528($t0)
-	sw $t1, 768($t0)
-	sw $t1, 784($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1032($t0)
-	sw $t1, 1036($t0)
-	li $t1, SCORE_COLOUR
-	sw $t1, 260($t0)
-	sw $t1, 268($t0)	
-	sw $t1, 516($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)	
-	# draw remaining time
-	lh $t2, counters+2($zero)
-	li $a0, BASE_ADDRESS
-	addi $a0, $a0, SCORE_LOCATION
-	move $a1, $t2
-	jal draw_score
 	# draw "YOU DIED"
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 4108
@@ -2275,7 +2291,9 @@ defeat:
 	
 	j BYEBYE
 
+time_up:
 
+    j BYEBYE
 
 
 
