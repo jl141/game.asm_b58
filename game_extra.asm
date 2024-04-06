@@ -55,7 +55,7 @@
 .eqv TIMER_COLOUR 0xaa55ff
 .eqv CROWN_COLOUR 0xffdd00
 .eqv LASER_DMG 10
-.eqv BOSS_DMG 1
+.eqv BOSS_DMG 0
 .eqv MAX_TIME 141
 .eqv INVINCIBILITY_FRAMES 10
 debug: .asciiz "print me mmmm yea\n "
@@ -678,6 +678,7 @@ draw_9:
 	sw $t1, 520($t0)
 	sw $t1, 776($t0)
 	sw $t1, 1024($t0)
+	sw $t1, 1028($t0)
 	jr $ra
 
 game_init:
@@ -822,39 +823,19 @@ init_hearts_loop:
 game_loop:
 	# check for input
 	jal check_keypress
-    ###############################################################
-	li $v0, 4		      
-	la $a0, debug
-	syscall
-    #################################################
     # update positions
     jal game_update_positions
-    ###############################################################
-	li $v0, 4		      
-	la $a0, debug
-	syscall
-    #################################################
 	# check for collisions
     jal game_check_collisions
-     ###############################################################
-	li $v0, 4		      
-	la $a0, debug
-	syscall
-    #################################################
     # update game screen
     jal game_update_screen
-    ###############################################################
-	li $v0, 4		      
-	la $a0, debug
-	syscall
-    #################################################
 	# increment frame counter
 	lh $t0, counters+0($zero)
 	addi $t0, $t0, 1
 	# check if FPS is reached
 	beq $t0, FPS, second_elasped
 	sh $t0, counters+0($zero)
-	j frame_delay
+	j game_frame_delay
 second_elasped:
 	lh $t2, counters+2($zero)	
 	addi $t2, $t2, -1
@@ -862,6 +843,7 @@ second_elasped:
 	sh $zero, counters+0($zero)
 	sh $t2, counters+2($zero)
 	jal paint_time
+game_frame_delay:
 	jal frame_delay
 	j game_loop
 
@@ -994,8 +976,9 @@ update_playser:
 # Checks for collisions in game
 game_check_collisions:
     sw $ra, retadd($zero)
-player_collisions:
-    la $a0, player_boss
+game_player_collisions:
+    # check borders
+    jal player_borders
 	# get player states
 	lh $t0, player+0($zero) # x position
 	lh $t2, player+2($zero) # y position
@@ -1003,23 +986,19 @@ player_collisions:
 	lb $t5, player+5($zero) # y velocity
 	lb $t6, player+6($zero) # jump state
 	lb $t7, player+7($zero) # health points
-    jal player_borders
-    ###############################################################
-	li $v0, 4		      
-	la $a0, debug2
-	syscall
-    #################################################
-
+    # if player on floor, skip platform check
+    addi $t2, $t2, PLAYER_HEIGHT
+    bge $t2, FLOOR_HEIGHT, player_boss
 player_platforms:
 	# if velocity is going up, do not check for platform collision
-	blt $t5, $zero, player_boss
+	blt $t5, $zero, player_slider
 player_platform_1:
 	# check player-platform_1 collision
 	lh $t8, platform_1+2($zero)
 	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
 	lh $t9, player+12($zero) # previous y position
 	bgt $t9, $t8, player_platform_2 # check previous y position
-	blt $t2, $t8, player_platform_2 # check new y position
+	ble $t2, $t8, player_platform_2 # check new y position
 	lh $t9, platform_1+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_2 # check left edge of platform
@@ -1037,7 +1016,7 @@ player_platform_2:
 	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
 	lh $t9, player+12($zero) # previous y position
 	bgt $t9, $t8, player_platform_3 # check previous y position
-	blt $t2, $t8, player_platform_3 # check new y position
+	ble $t2, $t8, player_platform_3 # check new y position
 	lh $t9, platform_2+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_3 # check left edge of platform
@@ -1055,7 +1034,7 @@ player_platform_3:
 	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
 	lh $t9, player+12($zero) # previous y position
 	bgt $t9, $t8, player_platform_4 # check previous y position
-	blt $t2, $t8, player_platform_4 # check new y position
+	ble $t2, $t8, player_platform_4 # check new y position
 	lh $t9, platform_3+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_4 # check left edge of platform
@@ -1073,7 +1052,7 @@ player_platform_4:
 	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
 	lh $t9, player+12($zero) # previous y position
 	bgt $t9, $t8, player_platform_5 # check previous y position
-	blt $t2, $t8, player_platform_5 # check new y position
+	ble $t2, $t8, player_platform_5 # check new y position
 	lh $t9, platform_4+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_platform_5 # check left edge of platform
@@ -1091,7 +1070,7 @@ player_platform_5:
 	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
 	lh $t9, player+12($zero) # previous y position
 	bgt $t9, $t8, player_slider # check previous y position
-	blt $t2, $t8, player_slider # check new y position
+	ble $t2, $t8, player_slider # check new y position
 	lh $t9, platform_5+0($zero)
 	addi $t9, $t9, -2
 	blt $t0, $t9, player_slider # check left edge of platform
@@ -1102,40 +1081,44 @@ player_platform_5:
 	sb $zero, player+4($zero)
 	sb $zero, player+5($zero)
 	sb $zero, player+6($zero)
-	j player_slider
 player_slider:
 	# check player-slider collision
 	lh $t8, slider+2($zero)
-	bgt $t2, $t8, player_left_wall # check y position
-	addi $t8, $t8, -PLAYER_HEIGHT
-	blt $t2, $t8, player_left_wall # check foot position
+	addi $t8, $t8, -PLAYER_HEIGHT # platform height + player height
+	lh $t9, player+12($zero) # previous y position
+	bgt $t9, $t8, player_boss # check previous y position
+	ble $t2, $t8, player_boss # check new y position
+	#lh $t8, slider+2($zero)
+	#bgt $t2, $t8, player_boss # check y position
+	#addi $t8, $t8, -PLAYER_HEIGHT
+	#blt $t2, $t8, player_boss # check foot position
 	lh $t9, slider+0($zero)
 	addi $t9, $t9, -2
-	blt $t0, $t9, player_left_wall # check left edge of platform
+	blt $t0, $t9, player_boss # check left edge of platform
 	addi $t9, $t9, 11
-	bgt $t0, $t9, player_left_wall # check right edge of platform
+	bgt $t0, $t9, player_boss # check right edge of platform
 	# update player states accordingly
 	lb $t4, slider+4($zero)
 	lb $t5, slider+5($zero)
 	sh $t8, player+2($zero)	
 	sb $t4, player+4($zero)
 	sb $t5, player+5($zero)
-	sb $zero, player+6($zero)
+	sb $zero, player+6($zero) 
 player_boss:
 	# if player damage state is negative, do not check for collision
 	lb $t8, player+8($zero)
-	bltz $t8, player_dart
+	bltz $t8, player_walls
 	# check player-boss collision
 	lh $t8, boss+0($zero) # boss x position
 	addi $t8, $t8, -3
-	blt $t0, $t8, player_dart # check left x bound
+	blt $t0, $t8, player_walls # check left x bound
 	addi $t8, $t8, 9	
-	bgt $t0, $t8, player_dart # check right x bound	
+	bgt $t0, $t8, player_walls # check right x bound	
 	lh $t9, boss+2($zero) # boss y position
 	addi $t9, $t9, -4
-	blt $t2, $t9, player_dart # check upper y bound
-	addi $t9, $t9, 11	
-	bgt $t2, $t9, player_dart # check lower y bound
+	blt $t2, $t9, player_walls # check upper y bound
+	addi $t9, $t9, 11
+	bgt $t2, $t9, player_walls # check lower y bound
 	# update player states accordingly
 	lb $t9, player+9($zero) # get player direction to calculate knockback
 	beqz $t9, knockback_right
@@ -1150,10 +1133,11 @@ finish_knockback:
 	li $t8, 1
 	sb $t4, player+4($zero)
 	sb $t5, player+5($zero)	
-	sb $t6, player+6($zero)		
+	sb $t6, player+6($zero)
 	sb $t7, player+7($zero)
-	sb $t8, player+8($zero)	
-	
+	sb $t8, player+8($zero)
+player_walls: # need to check walls again because knockback
+    jal player_check_left
 player_dart:
 	# check player-dart collision
 	lh $t8, dart+0($zero) # dart x position
@@ -1174,7 +1158,6 @@ player_dart:
 	sb $t7, player+7($zero)
 	sb $t8, player+8($zero)
 	j stop_dart
-	
 dart_borders:
 	# get dart states
 	lh $t0, dart+0($zero) # x position
@@ -1244,13 +1227,13 @@ boss_laser:
 	# check boss-laser collision
 	lh $t8, laser+0($zero) # dart x position
 	addi $t8, $t8, -6
-	blt $t0, $t8, laser_borders # check left x bound
+	blt $t0, $t8, game_check_laser_borders # check left x bound
 	addi $t8, $t8, 7	
-	bgt $t0, $t8, laser_borders # check right x bound		
+	bgt $t0, $t8, game_check_laser_borders # check right x bound		
 	lh $t9, laser+2($zero) # dart y position
-	bgt $t2, $t9, laser_borders # check lower y bound
+	bgt $t2, $t9, game_check_laser_borders # check lower y bound
 	addi $t9, $t9, -7	
-	blt $t2, $t9, laser_borders # check upper y bound
+	blt $t2, $t9, game_check_laser_borders # check upper y bound
 	# update boss states accordingly
 	lb $t7, boss+7($zero)
 	addi $t7, $t7, -LASER_DMG # lose health
@@ -1261,12 +1244,6 @@ boss_laser:
 	jal stop_laser
 game_check_laser_borders:
     jal laser_borders
-    ###############################################################
-	li $v0, 4		      
-	la $a0, debug2
-	syscall
-    #################################################
-
 game_check_collisions_return:
     lw $ra, retadd($zero)
     jr $ra
@@ -1293,7 +1270,6 @@ stop_laser:
     jr $ra
 
 # Ensures player stays within the borders
-# To skip additional y checks, return to $a0
 player_borders:
  	lh $t2, player+2($zero) # player y position 
 	# check player-floor collision
@@ -1311,21 +1287,21 @@ player_floor:
 player_check_left:
 	# check player-left_wall collision
  	lh $t0, player+0($zero) # player x position 
-	ble $t0, 0, player_left_wall
+	blt $t0, 0, player_left_wall
     j player_check_right
 player_left_wall:
 	sh $zero, player+0($zero)
 	sb $zero, player+4($zero)
-    jr $a0
+    jr $ra
 player_check_right:
 	# check player-right_wall collision
-	bge $t0, 60, player_right_wall
-    jr $a0
+	bgt $t0, 60, player_right_wall
+    jr $ra
 player_right_wall:
 	li $t0, 60
 	sh $t0, player+0($zero)
 	sb $zero, player+4($zero)
-    jr $a0
+    jr $ra
 
 # Updates the game screen
 game_update_screen:
@@ -1456,16 +1432,16 @@ paint_platforms:
 	lh $a2, platform_2+2($zero) # y position
     jal paint_platform
 	# paint platform_3
-	lh $t0, platform_3+0($zero) # x position	
-	lh $t2, platform_3+2($zero) # y position
+	lh $a0, platform_3+0($zero) # x position	
+	lh $a2, platform_3+2($zero) # y position
     jal paint_platform
 	# paint platform_4
-	lh $t0, platform_4+0($zero) # x position	
-	lh $t2, platform_4+2($zero) # y position
+	lh $a0, platform_4+0($zero) # x position	
+	lh $a2, platform_4+2($zero) # y position
     jal paint_platform
 	# paint platform_5
-	lh $t0, platform_5+0($zero) # x position	
-	lh $t2, platform_5+2($zero) # y position
+	lh $a0, platform_5+0($zero) # x position	
+	lh $a2, platform_5+2($zero) # y position
     jal paint_platform
 paint_slider:
 	# paint slider
@@ -1679,7 +1655,7 @@ paint_player_continue:
 	li $t1, LASER_COLOUR # goggle colour
 	sw $t1, 264($t0)
 	sw $t1, 268($t0)
-	j paint_laser	
+	j laser_velocity_check	
 paint_player_left:
 	sw $t1, 0($t0)
 	sw $t1, 264($t0)
@@ -1689,6 +1665,7 @@ paint_player_left:
 	li $t1, LASER_COLOUR # goggle colour
 	sw $t1, 256($t0)
 	sw $t1, 260($t0)
+laser_velocity_check:
 	# paint laser if velocity is not zero
 	lb $t4, laser+4($zero)
 	bnez $t4, paint_laser
@@ -1813,8 +1790,6 @@ player_move_left:
 	lb $t4, player+4($zero) # get x velocity
 	add $t4, $t4, -1 # add left speed
 	sb $t4, player+4($zero)
-	li $t6, 1 # new jump state
-	sb $t6, player+6($zero)
 	jr $ra
 d_pressed: # move right
 	li $t9, 1 # face right
@@ -1827,8 +1802,6 @@ player_move_right:
 	lb $t4, player+4($zero) # get x velocity
 	add $t4, $t4, 1 # add right speed
 	sb $t4, player+4($zero)
-	li $t6, 1 # new jump state
-	sb $t6, player+6($zero)
 	jr $ra
 f_pressed: # right double jump
 	# only proceed if player jump state is 1
@@ -1846,7 +1819,7 @@ right_double_jump:
 	sb $t9, player+9($zero)
 	jr $ra
 j_pressed: # jump
-	# only proceed if jump state is 0 
+	# only proceed if jump state is 0
 	lb $t6, player+6($zero)
 	beq $t6, 0, player_jump
 	jr $ra
