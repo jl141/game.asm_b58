@@ -141,7 +141,6 @@ init:
 
 main_title:
 	jal reset_screen
-
 	# print crown symbol
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, TIMER_LOCATION # starting point
@@ -161,14 +160,12 @@ main_title:
 	sw $t1, 784($t0)
 	li $t1, LASER_COLOUR
 	sw $t1, 520($t0)
-		
 	# draw high score
 	sh $t4, counters+4($zero)
 	li $a0, BASE_ADDRESS
 	addi $a0, $a0, SCORE_LOCATION
 	move $a1, $t4
 	jal draw_score
-	
 	# title AB-58 
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 8192
@@ -183,16 +180,13 @@ main_title:
 	sw $t1, 784($t0)
 	li $t1, BODY_COLOUR
     jal draw_A
-	
 	# second letter B 
 	addi $t0, $t0, 32
 	li $t1, BOSS_COLOUR
     jal draw_B
-
 	# third char - 
 	addi $t0, $t0, 32
     jal draw_dash
-
 	# fourth char 5
 	addi $t0, $t0, 32
 	sw $t1, 4($t0)
@@ -232,7 +226,6 @@ main_title:
 	sw $t1, 1804($t0)
 	sw $t1, 1808($t0)
 	sw $t1, 1812($t0)
-
 	# fifth char 8
 	addi $t0, $t0, 32
 	sw $t1, 4($t0)
@@ -270,22 +263,53 @@ main_title:
 	sw $t1, 1804($t0)
 	sw $t1, 1808($t0)
 	sw $t1, 1812($t0)
-
+	jal init_playser
 main_title_loop:
-	li $t9, 0xffff0000
-	lw $t8, 0($t9)
-	beq $t8, 1, main_title_keypressed
-main_title_loop_refresh:
-	li $v0, 32
-	li $a0, FRAME_DELAY
-	syscall
+	# temporary game init
+	#li $t9, 0xffff0000
+	#lw $t8, 4($t9) 
+	#beq $t8, 0x67, game_init # start game
+
+	# check for input
+	jal check_keypress
+    # update positions
+    jal update_playser
+	# check for playser boundaries
+    jal player_borders
+	jal laser_borders
+    # update main title screen
+    jal erase_playser
+    jal paint_playser
+	# frame delay
+	jal frame_delay
 	j main_title_loop
-main_title_keypressed:
-	lw $t8, 4($t9) 
-	beq $t8, 0x67, game_init # key g
-	j main_title_loop_refresh
 
-
+init_playser:
+	# initialize player states
+	li $t0, 1
+	li $t2, 57
+	li $t7, 5
+	li $t9, 1
+	sh $t0, player+0($zero)
+	sh $t2, player+2($zero)
+	sh $zero, player+4($zero)
+	sb $zero, player+5($zero)
+	sb $zero, player+6($zero)
+	sb $t7, player+7($zero)
+	sb $zero, player+8($zero)
+	sb $t9, player+9($zero)
+	sh $t0, player+10($zero)
+	sh $t2, player+12($zero)
+	# initialize laser states
+	li $t0, 55
+	li $t2, 1
+	sh $t0, laser+0($zero)
+	sh $t2, laser+2($zero)
+	sb $zero, laser+4($zero)	
+	sb $zero, laser+5($zero)	
+	sh $t0, laser+6($zero)
+	sh $t2, laser+8($zero)
+	jr $ra
 
 game_init:
 	jal reset_screen
@@ -345,30 +369,8 @@ init_hearts_loop:
 	addi $a0, $a0, SCORE_LOCATION
 	move $a1, $t2
 	jal draw_score
-	# initialize player states
-	li $t0, 1
-	li $t2, 57
-	li $t7, 5
-	li $t9, 1
-	sh $t0, player+0($zero)
-	sh $t2, player+2($zero)
-	sh $zero, player+4($zero)
-	sb $zero, player+5($zero)
-	sb $zero, player+6($zero)
-	sb $t7, player+7($zero)
-	sb $zero, player+8($zero)
-	sb $t9, player+9($zero)
-	sh $t0, player+10($zero)
-	sh $t2, player+12($zero)
-	# initialize laser states
-	li $t0, 55
-	li $t2, 1
-	sh $t0, laser+0($zero)
-	sh $t2, laser+2($zero)
-	sb $zero, laser+4($zero)	
-	sb $zero, laser+5($zero)	
-	sh $t0, laser+6($zero)
-	sh $t2, laser+8($zero)
+	# initialize playser states
+	jal init_playser
 	# initialize boss states
 	li $t0, 56
 	li $t2, 54
@@ -894,7 +896,7 @@ player_borders:
 	li $t1, FLOOR_HEIGHT
 	addi $t1, $t1, -PLAYER_HEIGHT
 	bge $t2, $t1, player_floor
-    jr $ra
+    j player_check_left
 player_floor:
 	# update player states
 	move $t2, $t1
@@ -1497,6 +1499,14 @@ end_screen:
 	lb $t7, player+7($zero)
 	beqz $t7, defeat
 victory:
+	# remaining time is high score?
+	lh $t2, counters+2($zero)
+	lh $t4, counters+4($zero)
+	bgt $t2, $t4, high_score
+	j draw_success
+high_score:
+	sh $t2, counters+4($zero)
+draw_success:
 	# draw "SUCCESS"
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 4116
