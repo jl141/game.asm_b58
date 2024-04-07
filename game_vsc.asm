@@ -44,10 +44,20 @@
 # 		F: right double jump
 #		J: jump
 #		L: shoot laser
-#	Notes about the controls:
+# - Notes about the controls:
 #		You can only double jump if you are currently jumping.
 #		Stepping in the air will only change the direction you face.
 # 		You can only shoot one laser at a time. 
+# - Pick-up effects:
+# 		(green) Health potion
+#		 - Heals player up to 5 hearts
+#		 - Spawns periodically
+#		(blue) Freeze Spell
+#		 - Freezes boss for a short duration
+#		 - Spawns when boss is unfrozen
+#		(yellow) Super Sneakers
+#		 - Gives a boost to the player's jump (but not double jump)
+#		 - Does not respawn
 # 
 #####################################################################
 
@@ -77,7 +87,7 @@
 .eqv BOSS_DMG 1
 .eqv MAX_TIME 141
 .eqv INVINCIBILITY_FRAMES 10
-.eqv FREEZE_FRAMES 40
+.eqv FREEZE_FRAMES 100
 
 # storage for a return address
 retadd: .space 4
@@ -441,9 +451,9 @@ boss_action:
 	li $a1, 80
 	syscall
 	bne $t6, 0, boss_update_position # only do action if jump state is 0
-	blt $a0, 1, boss_shoot
-	blt $a0, 9, boss_jump
-	blt $a0, 13, boss_move
+	blt $a0, 4, boss_shoot
+	blt $a0, 12, boss_jump
+	blt $a0, 32, boss_move
 boss_idle:
 	li $t4, 0
 	li $t5, 0
@@ -1201,8 +1211,6 @@ paint_boss_continue:
 	sw $t1, 1032($t0)
 	sw $t1, 1036($t0)
 	sw $t1, 1040($t0)
-game_paint_playser:
-	jal paint_playser
 paint_dart:
 	# paint dart if velocity is not zero
 	lb $t5, dart+5($zero)
@@ -1220,12 +1228,6 @@ paint_dart:
 	sw $t1, 256($t0)
 	sw $t1, 512($t0)
 paint_hearts:
-	lb $t8, player+8($zero) # player damage state
-	# only print hearts if damage state = -invincibility frames
-	li $t9, -INVINCIBILITY_FRAMES
-	bne $t8, $t9, invincibility_decay
-	# do not reprint hearts unless damage state = -invincibility frames
-	bne $t8, $t9, freeze_decay
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260 # starting point
 	lb $t7, player+7($zero) # player health
@@ -1270,6 +1272,8 @@ paint_hearts_loop:
 	sw $t1, 776($t0)
 	sw $t1, 780($t0)
 	sw $t1, 1032($t0)
+game_paint_playser:
+	jal paint_playser
 invincibility_decay:
 	addi $t8, $t8, 1
 	# only set value if not positive
