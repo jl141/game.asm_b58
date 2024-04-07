@@ -58,6 +58,10 @@
 #		(yellow) Super Sneakers
 #		 - Gives a boost to the player's jump (but not double jump)
 #		 - Does not respawn
+# - Note about game difficulty:
+#		I designed this game to be moderately difficult. 
+#		Lots of thought was put into balancing this game so it would
+#		be easy enough to beat with a few tries but hard to master.
 # 
 #####################################################################
 
@@ -83,10 +87,10 @@
 .eqv TIMER_COLOUR 0xaa55ff
 .eqv CROWN_COLOUR 0xffdd00
 .eqv ICE_COLOUR 0x1199ff
-.eqv LASER_DMG 10
+.eqv LASER_DMG 1
 .eqv BOSS_DMG 1
 .eqv MAX_TIME 141
-.eqv INVINCIBILITY_FRAMES 10
+.eqv INVINCIBILITY_FRAMES 15
 .eqv FREEZE_FRAMES 100
 
 # storage for a return address
@@ -122,7 +126,7 @@ laser: .space 10
 # 1 byte: jump state
 # 1 byte: health points
 # 1 byte: is damaged
-# 1 byte: is shooting
+# 1 byte: is awake
 # 2 bytes: previous x position
 # 2 bytes: previous y position
 boss: .space 14
@@ -253,6 +257,8 @@ main_title:
 	sh $t0, player+0($zero)
 	sh $t2, player+2($zero)
 	sb $t6, player+6($zero)
+	# initialize pickups so player does not keep super sneakers
+	sb $zero, pickups+4($zero)
 main_title_loop:
 	# check for input
 	jal check_keypress
@@ -426,7 +432,12 @@ second_elasped:
 	addi $t2, $t2, -1
 	sh $zero, counters+0($zero)
 	sh $t2, counters+2($zero)
-	beqz $t2, end_screen
+	beqz $t2, end_screen # times up !!
+	bne $t2, 123, game_paint_time # wake up boss when 123 seconds
+game_wake_boss:
+	li $t9, 1 # wake boss
+	sb $t9, boss+9($zero)
+game_paint_time:
 	jal paint_time
 game_frame_delay:
 	jal frame_delay
@@ -442,6 +453,9 @@ boss_action:
 	lb $t4, boss+4($zero)
 	lb $t5, boss+5($zero)
 	lb $t6, boss+6($zero)
+	# no action if boss is not awake
+	lb $t9, boss+9($zero)
+	beqz $t9, boss_update_position
 	# no action if boss is frozen
 	lb $t2, pickups+2($zero)
 	bnez $t2, boss_update_position
@@ -451,9 +465,9 @@ boss_action:
 	li $a1, 80
 	syscall
 	bne $t6, 0, boss_update_position # only do action if jump state is 0
-	blt $a0, 4, boss_shoot
-	blt $a0, 12, boss_jump
-	blt $a0, 32, boss_move
+	blt $a0, 5, boss_shoot
+	blt $a0, 10, boss_jump
+	blt $a0, 40, boss_move
 boss_idle:
 	li $t4, 0
 	li $t5, 0
@@ -732,6 +746,8 @@ player_boss:
 	blt $t2, $t9, player_walls # check upper y bound
 	addi $t9, $t9, 11
 	bgt $t2, $t9, player_walls # check lower y bound
+	li $t9, 1 # wake boss
+	sb $t9, boss+9($zero)
 	# update player states accordingly
 	lb $t9, player+9($zero) # get player direction to calculate knockback
 	beqz $t9, knockback_right
@@ -832,6 +848,7 @@ player_freeze:
 	# update states accordingly
 	li $t1, 1
 	sb $t1, pickups+2($zero)
+	sb $t1, boss+9($zero) # wake boss
 	jal freeze_apply
 	j boss_collisions # dont check for other pickups
 player_super:
@@ -894,6 +911,8 @@ boss_laser:
 	addi $t9, $t9, -7	
 	blt $t2, $t9, game_check_laser_borders # check upper y bound
 	# update boss states accordingly
+	li $t9, 1 # wake boss
+	sb $t9, boss+9($zero)
 	lb $t7, boss+7($zero)
 	addi $t7, $t7, -LASER_DMG # lose health
 	li $t8, 1
@@ -1161,6 +1180,9 @@ paint_boss:
 	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
+	# check for sleeping boss
+	lb $t9, boss+9($zero)
+	beqz $t9, boss_sleeping
 	# determine body colour
 	lb $t2, pickups+2($zero)
 	bnez $t2, boss_frozen
@@ -1211,6 +1233,38 @@ paint_boss_continue:
 	sw $t1, 1032($t0)
 	sw $t1, 1036($t0)
 	sw $t1, 1040($t0)
+	j paint_dart
+boss_sleeping:
+	li $t1, TIMER_COLOUR
+	sw $t1, 1544($t0)
+	sw $t1, 1548($t0)
+	sw $t1, 1552($t0)
+	li $t1, BOSS_COLOUR
+	sw $t1, 516($t0)
+	sw $t1, 532($t0)
+	sw $t1, 768($t0)
+	sw $t1, 776($t0)
+	sw $t1, 784($t0)
+	sw $t1, 792($t0)
+	sw $t1, 1032($t0)
+	sw $t1, 1036($t0)
+	sw $t1, 1040($t0)
+	sw $t1, 1284($t0)
+	sw $t1, 1288($t0)
+	sw $t1, 1292($t0)
+	sw $t1, 1296($t0)
+	sw $t1, 1300($t0)
+	sw $t1, 1536($t0)
+	sw $t1, 1540($t0)
+	sw $t1, 1556($t0)
+	sw $t1, 1560($t0)
+	sw $t1, 1792($t0)
+	sw $t1, 1796($t0)
+	sw $t1, 1800($t0)
+	sw $t1, 1804($t0)
+	sw $t1, 1808($t0)
+	sw $t1, 1812($t0)
+	sw $t1, 1816($t0)
 paint_dart:
 	# paint dart if velocity is not zero
 	lb $t5, dart+5($zero)
@@ -1228,6 +1282,12 @@ paint_dart:
 	sw $t1, 256($t0)
 	sw $t1, 512($t0)
 paint_hearts:
+	#lb $t8, player+8($zero) # player damage state
+	## only print hearts if damage state = -invincibility frames
+	#li $t9, -INVINCIBILITY_FRAMES
+	#bne $t8, $t9, invincibility_decay
+	## do not reprint hearts unless damage state = -invincibility frames
+	#bne $t8, $t9, freeze_decay
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260 # starting point
 	lb $t7, player+7($zero) # player health
