@@ -234,13 +234,14 @@ main_title_loop:
     jal erase_playser
 	# draw exit sign
 	li $t0, BASE_ADDRESS
-	addi $t0, $t0, 13060
+	addi $t0, $t0, 13064
 	jal door
 	jal exit_arrow
-	addi $t0, $t0, 220
+	# draw enter sign
+	addi $t0, $t0, 212
 	jal door
 	jal enter_arrow
-	# draw enter sign
+	# draw player and laser
     jal paint_playser
 	# frame delay
 	jal frame_delay
@@ -1469,6 +1470,17 @@ end_screen:
 	addi $a0, $a0, SCORE_LOCATION
 	move $a1, $t2
 	jal draw_score
+	# draw Q (quit) 
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 13084
+	jal cross
+	jal draw_keycap
+	jal small_Q
+	# draw R (retry)
+	addi $t0, $t0, 188
+	jal single_right
+	jal draw_keycap
+	jal small_R
     # check if time up
     lh $t2, counters+2($zero)
     beqz $t2, time_up
@@ -1605,6 +1617,21 @@ end_screen_frame_delay:
 	jal frame_delay
 	j end_screen_loop
 # lots of drawing functions	from here on
+
+cross:
+	addi $t0, $t0, -1796
+	li $t1, DART_COLOUR
+	sw $t1, 0($t0)
+	sw $t1, 16($t0)
+	sw $t1, 260($t0)
+	sw $t1, 268($t0)
+	sw $t1, 520($t0)
+	sw $t1, 772($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1024($t0)
+	sw $t1, 1040($t0)
+	addi $t0, $t0, 1796
+	jr $ra
 door:
 	li $t1, FLOOR_DARK
 	sw $t1, 4($t0)
@@ -3112,6 +3139,7 @@ draw_E:
     jr $ra
 
 BYEBYE:
+	jal reset_screen
 	li $v0, 10 
 	syscall
 
