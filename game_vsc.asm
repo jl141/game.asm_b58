@@ -6,31 +6,48 @@
 # Student: Julian Liu, 1008819272, liujul12, laz.liu@mail.utoronto.ca
 #
 # Bitmap Display Configuration:
-# - Unit width in pixels: 4 (update this as needed)
-# - Unit height in pixels: 4 (update this as needed)
-# - Display width in pixels: 256 (update this as needed)
-# - Display height in pixels: 256 (update this as needed) 
+# - Unit width in pixels: 4 
+# - Unit height in pixels: 4 
+# - Display width in pixels: 256 
+# - Display height in pixels: 256 
 # - Base Address for Display: 0x10008000 ($gp)
 #
 # Which milestones have been reached in this submission?
 # (See the assignment handout for descriptions of the milestones)
-# - Milestone 1/2/3/4 (choose the one the applies) 
+# - Milestones 1,2,3,4
 #
-# Which approved features have been implemented for milestone 3?
+# Which approved features have been implemented for milestone 4?
 # (See the assignment handout for the list of additional features) 
-# 1. 
-# 2. 
-# 3. 
-# ... (add more if necessary)
-#
+# 1. (A) Moving objects
+# 2. (B) Moving platforms
+# 3. (E) Shoot enemies
+# 4. (F) Enemies shoot back!
+# 5. (G) Pick-up effects
+# 6. (H) Double jump
+# 7. (J) Start menu
+# 8. (M) Gimmicks:
+# 			- player knockback when colliding with the boss
+#			- temporary player invincibility after taking damage
+# 			- boss AI (moves towards player, shoots at player)
+# 
 # Link to video demonstration for final submission:
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it! 
 #
 # Are you OK with us sharing the video with people outside course staff?
-# - yes / no / yes, and please share this project github link as well! 
+# - yes 
 #
 # Any additional information that the TA needs to know:
-# - (write here, if any)
+# - Controls:
+# 		A: left double jump
+#   	S: step left
+#   	D: step right
+# 		F: right double jump
+#		J: jump
+#		L: shoot laser
+#	Notes about the controls:
+#		You can only double jump if you are currently jumping.
+#		Stepping in the air will only change the direction you face.
+# 		You can only shoot one laser at a time. 
 # 
 #####################################################################
 
@@ -44,6 +61,7 @@
 .eqv BOSS_HEIGHT 8
 .eqv TIMER_LOCATION 432
 .eqv SCORE_LOCATION 460
+.eqv PICKUP_OFFSET 1264
 .eqv BACKGROUND 0x444444
 .eqv BODY_COLOUR 0xff7700
 .eqv LASER_COLOUR 0x22eecc
@@ -54,12 +72,15 @@
 .eqv SCORE_COLOUR 0xffffcc
 .eqv TIMER_COLOUR 0xaa55ff
 .eqv CROWN_COLOUR 0xffdd00
+.eqv ICE_COLOUR 0x1199ff
 .eqv LASER_DMG 10
 .eqv BOSS_DMG 1
 .eqv MAX_TIME 141
 .eqv INVINCIBILITY_FRAMES 10
-debug: .asciiz "print me mmmm yea\n "
-debug2: .asciiz "print me too hngg\n "
+.eqv FREEZE_FRAMES 40
+
+# storage for a return address
+retadd: .space 4
 
 # player:
 # 2 bytes: x position
@@ -123,14 +144,18 @@ platform_5: .space 4
 # 2 bytes: previous y position
 slider: .space 10
 
+# pickups:
+# 2 bytes: health potion status: 0 = on screen, 1 = gone
+# 2 bytes: freeze spell status: 0 = on screen, other = freezing
+# 2 bytes: super sneakers status: 0 = on screen, 1 = claimed
+pickups: .space 6
+
 # counters:
 # 2 bytes: frame counter
 # 2 bytes: seconds remaining
 # 2 bytes: high score
 counters: .space 6
 
-# storage for a return address
-retadd: .space 4
 
 .globl init
 .text
@@ -276,32 +301,7 @@ init_playser:
 
 game_init:
 	jal reset_screen
-	# print 5 hearts
-	li $t0, BASE_ADDRESS
-	addi $t0, $t0, 260 # starting point
-	li $t2, 5 # counter
-init_hearts_loop:
-	li $t1, SCORE_COLOUR
-	sw $t1, 268($t0)
-	li $t1, DART_COLOUR	
-	sw $t1, 4($t0)
-	sw $t1, 12($t0)
-	sw $t1, 256($t0)
-	sw $t1, 260($t0)
-	sw $t1, 264($t0)
-	sw $t1, 272($t0)
-	sw $t1, 512($t0)
-	sw $t1, 516($t0)
-	sw $t1, 520($t0)
-	sw $t1, 524($t0)
-	sw $t1, 528($t0)
-	sw $t1, 772($t0)
-	sw $t1, 776($t0)
-	sw $t1, 780($t0)
-	sw $t1, 1032($t0)
-	addi $t0, $t0, 24
-	addi $t2, $t2, -1
-	bnez $t2, init_hearts_loop
+	jal full_health
 	# print timer symbol
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, TIMER_LOCATION # starting point
@@ -390,6 +390,10 @@ init_hearts_loop:
 	sb $t5, slider+5($zero)	
 	sh $t0, slider+6($zero)
 	sh $t2, slider+8($zero)
+	# initialize pickup states
+	sb $zero, pickups+0($zero)
+	sb $zero, pickups+2($zero)
+	sb $zero, pickups+4($zero)	
 	
 game_loop:
 	# check for input
@@ -424,20 +428,22 @@ game_update_positions:
 game_update_playser:
     jal update_playser
 boss_action:
-	# boss action
-	li $v0, 42
-	li $a0, 0
-	li $a1, 32
-	syscall
-	# only do action if jump state is 0
+	# get boss states
 	lb $t4, boss+4($zero)
 	lb $t5, boss+5($zero)
-	lb $t6, boss+6($zero)	
-	bne $t6, 0, boss_update_position	
+	lb $t6, boss+6($zero)
+	# no action if boss is frozen
+	lb $t2, pickups+2($zero)
+	bnez $t2, boss_update_position
+	# random action generator
+	li $v0, 42
+	li $a0, 0
+	li $a1, 80
+	syscall
+	bne $t6, 0, boss_update_position # only do action if jump state is 0
 	blt $a0, 1, boss_shoot
-	blt $a0, 2, boss_jump
-	blt $a0, 4, boss_dash
-	blt $a0, 16, boss_move
+	blt $a0, 9, boss_jump
+	blt $a0, 13, boss_move
 boss_idle:
 	li $t4, 0
 	li $t5, 0
@@ -446,10 +452,10 @@ boss_shoot:
 	# only shoot dart if player location is above boss
 	lh $t2, boss+2($zero)
 	lh $t8, player+2($zero)
-	blt $t2, $t8, boss_action
+	blt $t2, $t8, boss_update_position
 	# only shoot dart if dart velocity is zero
 	lb $t5, dart+5($zero)
-	bnez $t5, boss_action
+	bnez $t5, boss_update_position
 	lh $t0, boss+0($zero) # boss x position
 	lh $t2, boss+2($zero) # boss y position
 	li $t5, -3 # dart velocity
@@ -466,17 +472,6 @@ boss_jump:
 	li $t5, -3
 	li $t6, 1
 	j boss_update_position
-boss_dash:
-	# dash away from player x position
-	lh $t0, boss+0($zero)
-	lh $t8, player+0($zero)
-	bgt $t0, $t8, boss_dash_right
-	li $t4, -4
-	li $t5, 0
-	j boss_update_position	
-boss_dash_right:
-	li $t4, 4
-	li $t5, 0
 boss_move:
 	# move to player previous x position
 	lh $t0, boss+0($zero)
@@ -506,6 +501,18 @@ dart_position:
 	lb $t5, dart+5($zero)
 	add $t2, $t2, $t5
 	sh $t2, dart+2($zero)
+health_position:
+	lb $t8, pickups+0($zero)
+	beqz $t8, slider_position # do not spawn if already spawned
+	# spawn health potion
+	li $v0, 42
+	li $a0, 0
+	li $a1, 200
+	syscall
+	beq $a0, $zero, spawn_health
+	j slider_position
+spawn_health:
+	sb $zero, pickups+0($zero)
 slider_position:
 	# update slider position then velocity
 	lh $t0, slider+0($zero)
@@ -760,7 +767,7 @@ dart_borders:
 	blt $t2, 6, stop_dart # top border
 	blt $t0, 0, stop_dart # left border
 	bgt $t0, 62, stop_dart # right border
-	j boss_collisions
+	j player_pickups
 stop_dart:
 	li $t0, 55
 	li $t2, 1
@@ -768,6 +775,74 @@ stop_dart:
 	sh $t2, dart+2($zero)
 	sb $zero, dart+4($zero)
 	sb $zero, dart+5($zero)
+player_pickups:
+	# get player states
+	lh $t0, player+0($zero) # x position
+	lh $t2, player+2($zero) # y position
+player_health:
+	lb $t8, pickups+0($zero)
+	bnez $t8, player_freeze
+	# check collision
+	lh $t8, platform_4+0($zero)
+	addi $t8, $t8, 4 # pickup x position
+	addi $t8, $t8, -3
+	blt $t0, $t8, player_freeze # check left x bound
+	addi $t8, $t8, 5
+	bgt $t0, $t8, player_freeze # check right x bound	
+	lh $t9, platform_4+2($zero) 
+	addi $t9, $t9, -5 # pickup y position
+	addi $t9, $t9, -4
+	blt $t2, $t9, player_freeze # check upper y bound
+	addi $t9, $t9, 6
+	bgt $t2, $t9, player_freeze # check lower y bound
+	# update states accordingly
+	li $t1, 1
+	sb $t1, pickups+0($zero)
+	li $t7, 5
+	sb $t7, player+7($zero)
+	sb $zero, player+8($zero)
+	jal full_health
+	j boss_collisions # dont check for other pickups
+player_freeze:
+	lb $t8, pickups+2($zero)
+	bnez $t8, player_super
+	# check collision
+	lh $t8, platform_3+0($zero)
+	addi $t8, $t8, 4 # pickup x position
+	addi $t8, $t8, -3
+	blt $t0, $t8, player_super # check left x bound
+	addi $t8, $t8, 5
+	bgt $t0, $t8, player_super # check right x bound	
+	lh $t9, platform_3+2($zero) 
+	addi $t9, $t9, -5 # pickup y position
+	addi $t9, $t9, -4
+	blt $t2, $t9, player_super # check upper y bound
+	addi $t9, $t9, 6
+	bgt $t2, $t9, player_super # check lower y bound
+	# update states accordingly
+	li $t1, 1
+	sb $t1, pickups+2($zero)
+	jal freeze_apply
+	j boss_collisions # dont check for other pickups
+player_super:
+	lb $t8, pickups+4($zero)
+	bnez $t8, boss_collisions
+	# check collision
+	lh $t8, platform_5+0($zero)
+	addi $t8, $t8, 4 # pickup x position
+	addi $t8, $t8, -3
+	blt $t0, $t8, boss_collisions # check left x bound
+	addi $t8, $t8, 5
+	bgt $t0, $t8, boss_collisions # check right x bound	
+	lh $t9, platform_5+2($zero) 
+	addi $t9, $t9, -5 # pickup y position
+	addi $t9, $t9, -4
+	blt $t2, $t9, boss_collisions # check upper y bound
+	addi $t9, $t9, 6
+	bgt $t2, $t9, boss_collisions # check lower y bound
+	# update states accordingly
+	li $t1, 1
+	sb $t1, pickups+4($zero)
 boss_collisions:
 	# get boss states
 	lh $t0, boss+0($zero) # x position
@@ -779,30 +854,10 @@ boss_floor:
 	# check boss-floor collision
 	li $t1, FLOOR_HEIGHT
 	addi $t1, $t1, -BOSS_HEIGHT
-	blt $t2, $t1, boss_platforms
+	blt $t2, $t1, boss_left_wall
 	# update boss states
 	move $t2, $t1
 	sh $t2, boss+2($zero)	
-	sb $zero, boss+4($zero)
-	sb $zero, boss+5($zero)
-	sb $zero, boss+6($zero)
-	j boss_left_wall
-boss_platforms:
-	# if velocity is going up, do not check for platform collision
-	blt $t5, $zero, boss_left_wall
-boss_platform_1:
-	# check boss-platform_1 collision
-	lh $t8, platform_1+2($zero)
-	bgt $t2, $t8, boss_left_wall # check y position
-	addi $t8, $t8, -BOSS_HEIGHT
-	blt $t2, $t8, boss_left_wall # check foot position
-	lh $t9, platform_1+0($zero)
-	addi $t9, $t9, -4
-	blt $t0, $t9, boss_left_wall # check left edge of platform
-	addi $t9, $t9, 11
-	bgt $t0, $t9, boss_left_wall # check right edge of platform
-	# update boss states accordingly
-	sh $t8, boss+2($zero)
 	sb $zero, boss+4($zero)
 	sb $zero, boss+5($zero)
 	sb $zero, boss+6($zero)
@@ -991,11 +1046,11 @@ erase_slider:
 	# erase slider
 	lh $t0, slider+6($zero) # previous x position	
 	lh $t2, slider+8($zero) # previous y position
-	li $t1, BACKGROUND
 	mul $t0, $t0, 4 # x * 4 into $t0
 	mul $t2, $t2, 256 # y * 256 into $t2
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS # slider location in $t0
+	li $t1, BACKGROUND
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 8($t0)
@@ -1016,6 +1071,48 @@ erase_slider:
 	sw $t1, 284($t0)
 	sw $t1, 288($t0)
 	sw $t1, 292($t0)
+erase_health_potion:
+	# erase health potion
+	lh $t0, platform_4+0($zero)
+	lh $t2, platform_4+2($zero) 
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 256 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS # slider location in $t0
+	addi $t0, $t0, -PICKUP_OFFSET
+	jal draw_space
+paint_health_potion:
+	lb $t8, pickups+0($zero)
+	bnez $t8, erase_freeze
+	jal health_potion
+erase_freeze:
+	# erase freeze potion
+	lh $t0, platform_3+0($zero)
+	lh $t2, platform_3+2($zero) 
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 256 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS # slider location in $t0
+	addi $t0, $t0, -PICKUP_OFFSET
+	jal draw_space
+paint_freeze:
+	lb $t8, pickups+2($zero)
+	bnez $t8, erase_super
+	jal freeze_spell
+erase_super:
+	# erase super sneakers
+	lh $t0, platform_5+0($zero)
+	lh $t2, platform_5+2($zero) 
+	mul $t0, $t0, 4 # x * 4 into $t0
+	mul $t2, $t2, 256 # y * 256 into $t2
+	add $t0, $t0, $t2
+	addi $t0, $t0, BASE_ADDRESS # slider location in $t0
+	addi $t0, $t0, -PICKUP_OFFSET
+	jal draw_space
+paint_super:
+	lb $t8, pickups+4($zero)
+	bnez $t8, paint_platforms
+	jal super_sneakers
 paint_platforms:
 	# paint platform_1
 	lh $a0, platform_1+0($zero) # x position	
@@ -1055,14 +1152,19 @@ paint_boss:
 	add $t0, $t0, $t2
 	addi $t0, $t0, BASE_ADDRESS
 	# determine body colour
+	lb $t2, pickups+2($zero)
+	bnez $t2, boss_frozen
 	lb $t8, boss+8($zero)
 	bne $t8, 1, boss_not_damaged
 	sb $zero, boss+8($zero) # not damaged for next iteration
 	li $t1, LASER_COLOUR
 	j paint_boss_continue
+boss_frozen:
+	li $t1, ICE_COLOUR
+	j paint_boss_continue
 boss_not_damaged:
 	li $t1, BOSS_COLOUR
-paint_boss_continue:	
+paint_boss_continue:
 	sw $t1, 0($t0)
 	sw $t1, 4($t0)
 	sw $t1, 20($t0)
@@ -1123,7 +1225,7 @@ paint_hearts:
 	li $t9, -INVINCIBILITY_FRAMES
 	bne $t8, $t9, invincibility_decay
 	# do not reprint hearts unless damage state = -invincibility frames
-	bne $t8, $t9, game_update_screen_return
+	bne $t8, $t9, freeze_decay
 	li $t0, BASE_ADDRESS
 	addi $t0, $t0, 260 # starting point
 	lb $t7, player+7($zero) # player health
@@ -1171,8 +1273,14 @@ paint_hearts_loop:
 invincibility_decay:
 	addi $t8, $t8, 1
 	# only set value if not positive
-	bgtz $t8, game_update_screen_return
+	bgtz $t8, freeze_decay
 	sb $t8, player+8($zero)
+freeze_decay:
+	lb $t2, pickups+2($zero)
+	addi $t2, $t2, 1
+	# only set value if not positive
+	bgtz $t2, game_update_screen_return
+	sb $t2, pickups+2($zero)
 game_update_screen_return:
     lw $ra, retadd($zero)
 	jr $ra
@@ -1180,6 +1288,11 @@ game_update_screen_return:
 invincibility_apply:
 	li $t8, -INVINCIBILITY_FRAMES
 	sb $t8, player+8($zero)
+	jr $ra
+# Applies freeze frames to the boss
+freeze_apply:
+	li $t2, -FREEZE_FRAMES
+	sb $t2, pickups+2($zero)
 	jr $ra
 # Paints a platform at ($a0, $a2)
 paint_platform:
@@ -1248,21 +1361,36 @@ paint_player_continue:
 	sw $t1, 12($t0)
 	sw $t1, 256($t0)
 	sw $t1, 260($t0)
-	sw $t1, 1028($t0)
-	sw $t1, 1036($t0)
 	li $t1, LASER_COLOUR # goggle colour
 	sw $t1, 264($t0)
 	sw $t1, 268($t0)
+	la $a0, right_boots
+	j super_colour
+right_boots:
+	sw $t1, 1028($t0)
+	sw $t1, 1036($t0)
 	j laser_velocity_check	
 paint_player_left:
 	sw $t1, 0($t0)
 	sw $t1, 264($t0)
 	sw $t1, 268($t0)
-	sw $t1, 1024($t0)
-	sw $t1, 1032($t0)
 	li $t1, LASER_COLOUR # goggle colour
 	sw $t1, 256($t0)
 	sw $t1, 260($t0)
+	la $a0, left_boots
+	j super_colour
+left_boots:
+	sw $t1, 1024($t0)
+	sw $t1, 1032($t0)
+	j laser_velocity_check
+super_colour:
+	lb $t4, pickups+4($zero)
+	beqz $t4, super_colour_no
+	li $t1, CROWN_COLOUR
+	jr $a0
+super_colour_no:
+	li $t1, BODY_COLOUR
+	jr $a0
 laser_velocity_check:
 	# paint laser if velocity is not zero
 	lb $t4, laser+4($zero)
@@ -1424,11 +1552,18 @@ j_pressed: # jump
 player_jump:
 	li $t4, 0 # x speed
 	sb $t4, player+4($zero)
-	lb $t5, player+5($zero)	# get y velocity
-	addi $t5, $t5, -4 # add jump speed
-	sb $t5, player+5($zero)	
 	li $t6, 1 # new jump state
 	sb $t6, player+6($zero)
+	# y velocity calculation
+	lb $t5, player+5($zero)	# get y velocity
+	lb $t8, pickups+4($zero)
+	beqz $t8, normal_jump # check for super sneakers
+	addi $t5, $t5, -6 # add super jump speed
+	sb $t5, player+5($zero)	# set y velocity
+	jr $ra
+normal_jump:
+	addi $t5, $t5, -4 # add jump speed
+	sb $t5, player+5($zero)	# set y velocity
 	jr $ra
 l_pressed: # shoot laser
 	# only proceed if laser velocity is zero
@@ -1618,6 +1753,59 @@ end_screen_frame_delay:
 	j end_screen_loop
 # lots of drawing functions	from here on
 
+full_health:
+	# print 5 hearts
+	li $t0, BASE_ADDRESS
+	addi $t0, $t0, 260 # starting point
+	li $t2, 5 # counter
+full_health_loop:
+	li $t1, SCORE_COLOUR
+	sw $t1, 268($t0)
+	li $t1, DART_COLOUR	
+	sw $t1, 4($t0)
+	sw $t1, 12($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 272($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	sw $t1, 520($t0)
+	sw $t1, 524($t0)
+	sw $t1, 528($t0)
+	sw $t1, 772($t0)
+	sw $t1, 776($t0)
+	sw $t1, 780($t0)
+	sw $t1, 1032($t0)
+	addi $t0, $t0, 24
+	addi $t2, $t2, -1
+	bnez $t2, full_health_loop
+	jr $ra
+super_sneakers:
+	li $t1, CROWN_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 8($t0)
+	sw $t1, 256($t0)
+	sw $t1, 264($t0)
+	sw $t1, 512($t0)
+	sw $t1, 516($t0)
+	jr $ra
+freeze_spell:
+	li $t1, ICE_COLOUR
+	sw $t1, 0($t0)
+	sw $t1, 8($t0)
+	sw $t1, 260($t0)
+	sw $t1, 512($t0)
+	sw $t1, 520($t0)
+	jr $ra
+health_potion:
+	li $t1, BOSS_COLOUR
+	sw $t1, 4($t0)
+	sw $t1, 256($t0)
+	sw $t1, 260($t0)
+	sw $t1, 264($t0)
+	sw $t1, 516($t0)
+	jr $ra
 cross:
 	addi $t0, $t0, -1796
 	li $t1, DART_COLOUR
